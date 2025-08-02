@@ -1,6 +1,7 @@
 package router
 
 import (
+	"github.com/go-redis/redis/v8"
 	"time"
 
 	"github.com/bryantaolong/system/internal/handler"
@@ -8,11 +9,10 @@ import (
 	"github.com/bryantaolong/system/internal/service"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 )
 
 func NewRouter(
-	db *gorm.DB,
+	redisClient *redis.Client,
 	authService *service.AuthService,
 	userService *service.UserService,
 ) *gin.Engine {
@@ -41,13 +41,13 @@ func NewRouter(
 
 	// 受保护接口
 	protected := r.Group("/api")
-	protected.Use(middleware.AuthRequired(authService))
+	protected.Use(middleware.AuthRequired(redisClient))
 	{
 		protected.GET("/auth/me", authHandler.Me)
 		protected.GET("/auth/logout", authHandler.Logout)
 
 		admin := protected.Group("/user")
-		admin.Use(middleware.RoleRequired(authService, "ROLE_ADMIN"))
+		admin.Use(middleware.RoleRequired("ROLE_ADMIN"))
 		{
 			admin.POST("/all", userHandler.GetAllUsers)
 			admin.GET("/:userId", userHandler.GetUserByID)
