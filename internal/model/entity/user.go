@@ -25,8 +25,8 @@ type User struct {
 	Deleted           int          `json:"-" db:"deleted"`       // 软删除标记不暴露给前端
 	Version           int          `json:"version" db:"version"` // 乐观锁版本号
 	CreateTime        time.Time    `json:"createTime" db:"create_time"`
-	CreateBy          string       `json:"createBy" db:"create_by"`
 	UpdateTime        sql.NullTime `json:"updateTime" db:"update_time"`
+	CreateBy          string       `json:"createBy" db:"create_by"`
 	UpdateBy          string       `json:"updateBy" db:"update_by"`
 }
 

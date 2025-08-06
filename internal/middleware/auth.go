@@ -3,10 +3,11 @@ package middleware
 
 import (
 	"context"
+	"net/http"
+
 	"github.com/bryantaolong/system/pkg/jwt"
 	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis/v8"
-	"net/http"
 )
 
 // AuthRequired 验证请求头中的 JWT 并与 Redis 中的 token 做一致性校验。
