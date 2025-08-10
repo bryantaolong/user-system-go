@@ -1,34 +1,35 @@
 package request
 
 import (
-	"github.com/go-playground/validator/v10"
 	"reflect"
 	"regexp"
 	"time"
+
+	"github.com/go-playground/validator/v10"
 )
 
 // UserSearchRequest 用户搜索请求结构体
 type UserSearchRequest struct {
-	Username          string    `form:"username" binding:"omitempty,min=2,max=20,usernameFormat"`
-	PhoneNumber       string    `form:"phoneNumber" binding:"omitempty,phone"`
-	Email             string    `form:"email" binding:"omitempty,email,max=100"`
-	Status            *int      `form:"status" binding:"omitempty,min=0,max=1"`
-	Roles             string    `form:"roles" binding:"omitempty,rolesFormat"`
-	LoginTime         time.Time `form:"loginTime" binding:"omitempty,ltnow"`
-	LoginIP           string    `form:"loginIp" binding:"omitempty,ip"`
-	PasswordResetTime time.Time `form:"passwordResetTime" binding:"omitempty,ltnow"`
-	LoginFailCount    *int      `form:"loginFailCount" binding:"omitempty,min=0,max=10"`
-	AccountLockTime   time.Time `form:"accountLockTime" binding:"omitempty,ltnow"`
-	Deleted           *int      `form:"deleted" binding:"omitempty,min=0,max=1"`
-	Version           *int      `form:"version" binding:"omitempty,min=0"`
-	CreateTime        time.Time `form:"createTime" binding:"omitempty,ltnow"`
-	CreateTimeStart   time.Time `form:"createTimeStart" binding:"omitempty,ltnow"`
-	CreateTimeEnd     time.Time `form:"createTimeEnd" binding:"omitempty,ltnow"`
-	CreateBy          string    `form:"createBy" binding:"omitempty,max=50"`
-	UpdateTime        time.Time `form:"updateTime" binding:"omitempty,ltnow"`
-	UpdateTimeStart   time.Time `form:"updateTimeStart" binding:"omitempty,ltnow"`
-	UpdateTimeEnd     time.Time `form:"updateTimeEnd" binding:"omitempty,ltnow"`
-	UpdateBy          string    `form:"updateBy" binding:"omitempty,max=50"`
+	Username        string    `form:"username" binding:"omitempty,min=2,max=20,usernameFormat"`
+	Phone           string    `form:"phone" binding:"omitempty,phone"`
+	Email           string    `form:"email" binding:"omitempty,email,max=100"`
+	Status          *int      `form:"status" binding:"omitempty,min=0,max=1"`
+	Roles           string    `form:"roles" binding:"omitempty,rolesFormat"`
+	LastLoginAt     time.Time `form:"lastLoginAt" binding:"omitempty,ltnow"`
+	LastLoginIp     string    `form:"lastLoginIp" binding:"omitempty,ip"`
+	PasswordResetAt time.Time `form:"passwordResetAt" binding:"omitempty,ltnow"`
+	LoginFailCount  *int      `form:"loginFailCount" binding:"omitempty,min=0,max=10"`
+	LockedAt        time.Time `form:"lockedAt" binding:"omitempty,ltnow"`
+	Deleted         *int      `form:"deleted" binding:"omitempty,min=0,max=1"`
+	Version         *int      `form:"version" binding:"omitempty,min=0"`
+	CreatedAt       time.Time `form:"createdAT" binding:"omitempty,ltnow"`
+	CreateTimeStart time.Time `form:"createTimeStart" binding:"omitempty,ltnow"`
+	CreateTimeEnd   time.Time `form:"createTimeEnd" binding:"omitempty,ltnow"`
+	UpdatedAt       time.Time `form:"updatedAt" binding:"omitempty,ltnow"`
+	UpdateTimeStart time.Time `form:"updateTimeStart" binding:"omitempty,ltnow"`
+	UpdateTimeEnd   time.Time `form:"updateTimeEnd" binding:"omitempty,ltnow"`
+	CreatedBy       string    `form:"createdBy" binding:"omitempty,max=50"`
+	UpdatedBy       string    `form:"updatedBy" binding:"omitempty,max=50"`
 }
 
 // UserSearchRequestValidationMessages 用户搜索请求验证消息
@@ -36,29 +37,29 @@ var UserSearchRequestValidationMessages = map[string]string{
 	"Username.min":            "用户名长度应在2-20个字符之间",
 	"Username.max":            "用户名长度应在2-20个字符之间",
 	"Username.usernameFormat": "用户名只能包含中文、字母、数字和下划线",
-	"PhoneNumber.phone":       "手机号格式不正确",
+	"Phone.phone":             "手机号格式不正确",
 	"Email.email":             "邮箱格式不正确",
 	"Email.max":               "邮箱长度不能超过100个字符",
 	"Status.min":              "状态不合法",
 	"Status.max":              "状态不合法",
 	"Roles.rolesFormat":       "角色格式不正确",
-	"LoginTime.ltnow":         "登录时间不能是未来时间",
-	"LoginIP.ip":              "IP地址格式不正确",
-	"PasswordResetTime.ltnow": "密码重置时间不能是未来时间",
+	"LastLoginAt.ltnow":       "登录时间不能是未来时间",
+	"LastLoginIp.ip":          "IP地址格式不正确",
+	"PasswordResetAt.ltnow":   "密码重置时间不能是未来时间",
 	"LoginFailCount.min":      "登录失败次数不能为负数",
 	"LoginFailCount.max":      "登录失败次数超过最大值",
-	"AccountLockTime.ltnow":   "账户锁定时间不能是未来时间",
+	"LockedAt.ltnow":          "账户锁定时间不能是未来时间",
 	"Deleted.min":             "删除标记不合法",
 	"Deleted.max":             "删除标记不合法",
 	"Version.min":             "版本号不能为负数",
-	"CreateTime.ltnow":        "创建时间不能是未来时间",
+	"CreatedAt.ltnow":         "创建时间不能是未来时间",
 	"CreateTimeStart.ltnow":   "开始时间不能是未来时间",
 	"CreateTimeEnd.ltnow":     "结束时间不能是未来时间",
-	"CreateBy.max":            "创建人名称过长",
-	"UpdateTime.ltnow":        "更新时间不能是未来时间",
+	"UpdatedAt.ltnow":         "更新时间不能是未来时间",
 	"UpdateTimeStart.ltnow":   "开始时间不能是未来时间",
 	"UpdateTimeEnd.ltnow":     "结束时间不能是未来时间",
-	"UpdateBy.max":            "更新人名称过长",
+	"CreatedBy.max":           "创建人名称过长",
+	"UpdatedBy.max":           "更新人名称过长",
 }
 
 // ValidateUserSearchRequest 自定义验证方法

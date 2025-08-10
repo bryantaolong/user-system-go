@@ -88,8 +88,8 @@ func (s *UserService) buildSearchQuery(query *gorm.DB, req request.UserSearchReq
 	if req.Username != "" {
 		query = query.Where("username LIKE ?", "%"+req.Username+"%")
 	}
-	if req.PhoneNumber != "" {
-		query = query.Where("phone_number LIKE ?", "%"+req.PhoneNumber+"%")
+	if req.Phone != "" {
+		query = query.Where("phone LIKE ?", "%"+req.Phone+"%")
 	}
 	if req.Email != "" {
 		query = query.Where("email LIKE ?", "%"+req.Email+"%")
@@ -107,10 +107,10 @@ func (s *UserService) buildSearchQuery(query *gorm.DB, req request.UserSearchReq
 		query = query.Where("deleted = ?", *req.Deleted)
 	}
 	if !req.CreateTimeStart.IsZero() && !req.CreateTimeEnd.IsZero() {
-		query = query.Where("create_time BETWEEN ? AND ?", req.CreateTimeStart, req.CreateTimeEnd)
+		query = query.Where("created_at BETWEEN ? AND ?", req.CreateTimeStart, req.CreateTimeEnd)
 	}
 	if !req.UpdateTimeStart.IsZero() && !req.UpdateTimeEnd.IsZero() {
-		query = query.Where("update_time BETWEEN ? AND ?", req.UpdateTimeStart, req.UpdateTimeEnd)
+		query = query.Where("updated_at BETWEEN ? AND ?", req.UpdateTimeStart, req.UpdateTimeEnd)
 	}
 	return query
 }
@@ -129,8 +129,8 @@ func (s *UserService) UpdateUser(ctx context.Context, userID int64, req request.
 		}
 		user.Username = req.Username
 	}
-	if req.PhoneNumber != "" {
-		user.PhoneNumber = req.PhoneNumber
+	if req.Phone != "" {
+		user.Phone = req.Phone
 	}
 	if req.Email != "" {
 		user.Email = req.Email
@@ -138,8 +138,8 @@ func (s *UserService) UpdateUser(ctx context.Context, userID int64, req request.
 
 	token := extractTokenFromContext(ctx)
 	operator, _ := s.authService.GetCurrentUsername(token)
-	user.UpdateBy = operator
-	user.UpdateTime = sql.NullTime{Time: time.Now(), Valid: true}
+	user.UpdatedBy = operator
+	user.UpdatedAt = sql.NullTime{Time: time.Now(), Valid: true}
 
 	if err := s.db.WithContext(ctx).Save(user).Error; err != nil {
 		return nil, err
@@ -188,8 +188,8 @@ func (s *UserService) ChangeRoleByIds(ctx context.Context, userID int64, req req
 	// 5. 更新审计字段
 	token := extractTokenFromContext(ctx)
 	operator, _ := s.authService.GetCurrentUsername(token)
-	user.UpdateBy = operator
-	user.UpdateTime = sql.NullTime{Time: time.Now(), Valid: true}
+	user.UpdatedBy = operator
+	user.UpdatedAt = sql.NullTime{Time: time.Now(), Valid: true}
 
 	// 6. 事务保存
 	tx := s.db.WithContext(ctx).Begin()
@@ -220,11 +220,11 @@ func (s *UserService) ChangePassword(ctx context.Context, userID int64, req requ
 	}
 
 	user.Password = string(hashed)
-	user.PasswordResetTime = sql.NullTime{Time: time.Now(), Valid: true}
+	user.PasswordResetAt = sql.NullTime{Time: time.Now(), Valid: true}
 	token := extractTokenFromContext(ctx)
 	operator, _ := s.authService.GetCurrentUsername(token)
-	user.UpdateBy = operator
-	user.UpdateTime = sql.NullTime{Time: time.Now(), Valid: true}
+	user.UpdatedBy = operator
+	user.UpdatedAt = sql.NullTime{Time: time.Now(), Valid: true}
 
 	if err := s.db.WithContext(ctx).Save(user).Error; err != nil {
 		return nil, err
@@ -245,11 +245,11 @@ func (s *UserService) ChangePasswordForcefully(ctx context.Context, userID int64
 	}
 
 	user.Password = string(hashed)
-	user.PasswordResetTime = sql.NullTime{Time: time.Now(), Valid: true}
+	user.PasswordResetAt = sql.NullTime{Time: time.Now(), Valid: true}
 	token := extractTokenFromContext(ctx)
 	operator, _ := s.authService.GetCurrentUsername(token)
-	user.UpdateBy = operator
-	user.UpdateTime = sql.NullTime{Time: time.Now(), Valid: true}
+	user.UpdatedBy = operator
+	user.UpdatedAt = sql.NullTime{Time: time.Now(), Valid: true}
 
 	if err := s.db.WithContext(ctx).Save(user).Error; err != nil {
 		return nil, err
@@ -266,8 +266,8 @@ func (s *UserService) BlockUser(ctx context.Context, userID int64) (*entity.User
 	user.Status = 1
 	token := extractTokenFromContext(ctx)
 	operator, _ := s.authService.GetCurrentUsername(token)
-	user.UpdateBy = operator
-	user.UpdateTime = sql.NullTime{Time: time.Now(), Valid: true}
+	user.UpdatedBy = operator
+	user.UpdatedAt = sql.NullTime{Time: time.Now(), Valid: true}
 	if err := s.db.WithContext(ctx).Save(user).Error; err != nil {
 		return nil, err
 	}
@@ -283,8 +283,8 @@ func (s *UserService) UnblockUser(ctx context.Context, userID int64) (*entity.Us
 	user.Status = 0
 	token := extractTokenFromContext(ctx)
 	operator, _ := s.authService.GetCurrentUsername(token)
-	user.UpdateBy = operator
-	user.UpdateTime = sql.NullTime{Time: time.Now(), Valid: true}
+	user.UpdatedBy = operator
+	user.UpdatedAt = sql.NullTime{Time: time.Now(), Valid: true}
 	if err := s.db.WithContext(ctx).Save(user).Error; err != nil {
 		return nil, err
 	}
@@ -300,8 +300,8 @@ func (s *UserService) DeleteUser(ctx context.Context, userID int64) (*entity.Use
 	user.Deleted = 1
 	token := extractTokenFromContext(ctx)
 	operator, _ := s.authService.GetCurrentUsername(token)
-	user.UpdateBy = operator
-	user.UpdateTime = sql.NullTime{Time: time.Now(), Valid: true}
+	user.UpdatedBy = operator
+	user.UpdatedAt = sql.NullTime{Time: time.Now(), Valid: true}
 	if err := s.db.WithContext(ctx).Save(user).Error; err != nil {
 		return nil, err
 	}

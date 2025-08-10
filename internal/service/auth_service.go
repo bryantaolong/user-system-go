@@ -68,14 +68,14 @@ func (s *AuthService) Register(ctx context.Context, req request.RegisterRequest)
 	// 组装实体
 	now := sql.NullTime{Time: time.Now(), Valid: true}
 	user := &entity.User{
-		Username:    req.Username,
-		Password:    string(hashedPwd),
-		Email:       req.Email,
-		PhoneNumber: req.PhoneNumber,
-		Roles:       defaultRole,
-		CreateBy:    req.Username,
-		UpdateBy:    req.Username,
-		UpdateTime:  now,
+		Username:  req.Username,
+		Password:  string(hashedPwd),
+		Email:     req.Email,
+		Phone:     req.Phone,
+		Roles:     defaultRole,
+		CreatedBy: req.Username,
+		UpdatedBy: req.Username,
+		UpdatedAt: now,
 	}
 
 	// 写入数据库
@@ -99,7 +99,7 @@ func (s *AuthService) Login(loginReq request.LoginRequest, r *http.Request) (str
 		user.LoginFailCount++
 		if user.LoginFailCount >= 5 {
 			user.Status = 2
-			user.AccountLockTime = sql.NullTime{Time: time.Now(), Valid: true}
+			user.LockedAt = sql.NullTime{Time: time.Now(), Valid: true}
 			s.db.Save(&user)
 			return "", fmt.Errorf("输入密码错误次数过多，账号锁定")
 		}
@@ -111,12 +111,12 @@ func (s *AuthService) Login(loginReq request.LoginRequest, r *http.Request) (str
 		return "", fmt.Errorf("账号已被封禁")
 	}
 
-	if user.Status == 2 && user.AccountLockTime.Valid {
-		if time.Since(user.AccountLockTime.Time) < time.Hour {
+	if user.Status == 2 && user.LockedAt.Valid {
+		if time.Since(user.LockedAt.Time) < time.Hour {
 			return "", fmt.Errorf("账号已被锁定，请稍后再试")
 		}
 		user.Status = 0
-		user.AccountLockTime = sql.NullTime{Valid: false}
+		user.LockedAt = sql.NullTime{Valid: false}
 	}
 
 	// 1. 先看 Redis 是否有未过期 token
@@ -137,11 +137,11 @@ func (s *AuthService) Login(loginReq request.LoginRequest, r *http.Request) (str
 		return "", fmt.Errorf("Token存储失败: %v", err)
 	}
 
-	user.LoginTime = sql.NullTime{Time: time.Now(), Valid: true}
-	user.LoginIP = http2.GetClientIP(r)
+	user.LastLoginAt = sql.NullTime{Time: time.Now(), Valid: true}
+	user.LastLoginIP = http2.GetClientIP(r)
 	user.LoginFailCount = 0
-	user.UpdateTime = sql.NullTime{Time: time.Now(), Valid: true}
-	user.UpdateBy = user.Username
+	user.UpdatedAt = sql.NullTime{Time: time.Now(), Valid: true}
+	user.UpdatedBy = user.Username
 
 	if err := s.db.Save(&user).Error; err != nil {
 		return "", fmt.Errorf("更新用户信息失败: %v", err)
