@@ -7,12 +7,14 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"net/http"
+	"strings"
+	"sync"
+	"time"
+
 	http2 "github.com/bryantaolong/system/pkg/http"
 	"github.com/bryantaolong/system/pkg/jwt"
 	"github.com/go-redis/redis/v8"
-	"net/http"
-	"strings"
-	"time"
 
 	"github.com/bryantaolong/system/internal/model/entity"
 	"github.com/bryantaolong/system/internal/model/request"
@@ -23,8 +25,10 @@ import (
 
 // AuthService 负责用户注册、登录、登出、Token 刷新、权限判断等业务。
 type AuthService struct {
-	db    *gorm.DB
-	redis *redis.Client
+	db            *gorm.DB
+	redis         *redis.Client
+	defaultRole   string       // 缓存默认角色名
+	defaultRoleMu sync.RWMutex // 并发保护
 }
 
 // NewAuthService 创建并返回一个 AuthService 实例。
@@ -35,35 +39,50 @@ func NewAuthService(db *gorm.DB, rdb *redis.Client) *AuthService {
 	}
 }
 
-// Register 用户注册：检查用户名唯一性、密码加密、写入数据库。
-func (s *AuthService) Register(registerReq request.RegisterRequest) (*entity.User, error) {
-	var existingUser entity.User
-	if err := s.db.Where("username = ?", registerReq.Username).First(&existingUser).Error; err == nil {
+// Register 用户注册
+func (s *AuthService) Register(ctx context.Context, req request.RegisterRequest) (*entity.User, error) {
+	// 用户名唯一性检查
+	var cnt int64
+	if err := s.db.WithContext(ctx).
+		Model(&entity.User{}).
+		Where("username = ?", req.Username).
+		Count(&cnt).Error; err != nil {
+		return nil, fmt.Errorf("查询用户失败: %w", err)
+	}
+	if cnt > 0 {
 		return nil, fmt.Errorf("用户名已存在")
 	}
 
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(registerReq.Password), bcrypt.DefaultCost)
+	// 密码加密
+	hashedPwd, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 	if err != nil {
-		return nil, fmt.Errorf("密码加密失败: %v", err)
+		return nil, fmt.Errorf("密码加密失败")
 	}
 
-	user := entity.User{
-		Username:          registerReq.Username,
-		Password:          string(hashedPassword),
-		PhoneNumber:       registerReq.PhoneNumber,
-		Email:             registerReq.Email,
-		Roles:             "ROLE_USER",
-		PasswordResetTime: sql.NullTime{Time: time.Now(), Valid: true},
-		CreateBy:          registerReq.Username,
-		UpdateBy:          registerReq.Username,
-		CreateTime:        time.Now(),
+	// 查出默认角色
+	defaultRole, err := s.getDefaultRole(ctx)
+	if err != nil {
+		return nil, err
 	}
 
-	if err := s.db.Create(&user).Error; err != nil {
-		return nil, fmt.Errorf("创建用户失败: %v", err)
+	// 组装实体
+	now := sql.NullTime{Time: time.Now(), Valid: true}
+	user := &entity.User{
+		Username:    req.Username,
+		Password:    string(hashedPwd),
+		Email:       req.Email,
+		PhoneNumber: req.PhoneNumber,
+		Roles:       defaultRole,
+		CreateBy:    req.Username,
+		UpdateBy:    req.Username,
+		UpdateTime:  now,
 	}
 
-	return &user, nil
+	// 写入数据库
+	if err := s.db.WithContext(ctx).Create(user).Error; err != nil {
+		return nil, err
+	}
+	return user, nil
 }
 
 // Login 用户登录：验证密码、生成/复用 JWT、写 Redis、记录登录信息。
@@ -217,4 +236,31 @@ func (s *AuthService) Logout(tokenString string) error {
 	}
 	_, err = s.redis.Del(context.Background(), claims.Username).Result()
 	return err
+}
+
+// getDefaultRole 保证只会在第一次调用时查库，之后直接读缓存
+func (s *AuthService) getDefaultRole(ctx context.Context) (string, error) {
+	s.defaultRoleMu.RLock()
+	if s.defaultRole != "" {
+		s.defaultRoleMu.RUnlock()
+		return s.defaultRole, nil
+	}
+	s.defaultRoleMu.RUnlock()
+
+	s.defaultRoleMu.Lock()
+	defer s.defaultRoleMu.Unlock()
+
+	// double-check
+	if s.defaultRole != "" {
+		return s.defaultRole, nil
+	}
+
+	var role entity.UserRole
+	if err := s.db.WithContext(ctx).
+		Where("is_default = ?", true).
+		First(&role).Error; err != nil {
+		return "", fmt.Errorf("系统未配置默认角色: %w", err)
+	}
+	s.defaultRole = role.RoleName
+	return s.defaultRole, nil
 }

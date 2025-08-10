@@ -25,6 +25,7 @@ internal/
   handler/               # Route handlers (user, auth, etc.)
   middleware/            # Middleware (auth, permission, etc.)
   model/
+    dto/                 # DTOs
     entity/              # Entity definitions
     request/             # Request structs
     response/            # Response structs

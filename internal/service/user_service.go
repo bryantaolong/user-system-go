@@ -5,10 +5,11 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/gin-gonic/gin"
 	"strings"
 	_ "strings"
 	"time"
+
+	"github.com/gin-gonic/gin"
 
 	"github.com/bryantaolong/system/internal/model/entity"
 	"github.com/bryantaolong/system/internal/model/request"
@@ -146,18 +147,57 @@ func (s *UserService) UpdateUser(ctx context.Context, userID int64, req request.
 	return user, nil
 }
 
-// ChangeRole 修改用户角色
-func (s *UserService) ChangeRole(ctx context.Context, userID int64, roles string) (*entity.User, error) {
+// ChangeRoleByIds 根据角色 ID 列表批量修改用户角色
+func (s *UserService) ChangeRoleByIds(ctx context.Context, userID int64, req request.ChangeRoleRequest) (*entity.User, error) {
+	// 1. 查询用户
 	user, err := s.GetUserByID(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
-	user.Roles = roles
+
+	// 2. 查询对应的 UserRole
+	var roles []entity.UserRole
+	if err := s.db.WithContext(ctx).
+		Where("id IN ?", req.RoleIds).
+		Find(&roles).Error; err != nil {
+		return nil, err
+	}
+
+	// 3. 校验所有 id 都存在
+	if len(roles) != len(req.RoleIds) {
+		exist := make(map[int64]struct{}, len(roles))
+		for _, r := range roles {
+			exist[r.ID] = struct{}{}
+		}
+		missing := make([]int64, 0)
+		for _, id := range req.RoleIds {
+			if _, ok := exist[id]; !ok {
+				missing = append(missing, id)
+			}
+		}
+		return nil, fmt.Errorf("角色不存在：%v", missing)
+	}
+
+	// 4. 拼接 roleName -> 以英文逗号分隔
+	names := make([]string, len(roles))
+	for i, r := range roles {
+		names[i] = r.RoleName
+	}
+	user.Roles = strings.Join(names, ",")
+
+	// 5. 更新审计字段
 	token := extractTokenFromContext(ctx)
 	operator, _ := s.authService.GetCurrentUsername(token)
 	user.UpdateBy = operator
 	user.UpdateTime = sql.NullTime{Time: time.Now(), Valid: true}
-	if err := s.db.WithContext(ctx).Save(user).Error; err != nil {
+
+	// 6. 事务保存
+	tx := s.db.WithContext(ctx).Begin()
+	if err := tx.Save(user).Error; err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+	if err := tx.Commit().Error; err != nil {
 		return nil, err
 	}
 	return user, nil

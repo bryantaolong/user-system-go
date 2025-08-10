@@ -2,6 +2,7 @@ package db
 
 import (
 	"fmt"
+
 	"github.com/bryantaolong/system/internal/config"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"

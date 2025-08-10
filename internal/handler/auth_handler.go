@@ -23,7 +23,7 @@ func (h *AuthHandler) Register(c *gin.Context) {
 		response.Fail(c, err.Error())
 		return
 	}
-	user, err := h.authService.Register(req)
+	user, err := h.authService.Register(c.Request.Context(), req) // 注意这里
 	if err != nil {
 		response.Fail(c, err.Error())
 		return

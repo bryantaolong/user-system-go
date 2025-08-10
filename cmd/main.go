@@ -30,8 +30,9 @@ func main() {
 
 	authService := service.NewAuthService(db, redisClient)
 	userService := service.NewUserService(db, authService)
+	userRoleService := service.NewUserRoleService(db)
 
-	router := router.NewRouter(redisClient, authService, userService)
+	router := router.NewRouter(redisClient, authService, userService, userRoleService)
 
 	log.Println("🚀 项目已启动，监听 :8080")
 	log.Fatal(router.Run(":8080"))

@@ -25,6 +25,7 @@ internal/
   handler/               # 路由处理器（用户、认证等）
   middleware/            # 中间件（认证、权限等）
   model/
+    dto                  # 数据传输体
     entity/              # 实体定义
     request/             # 请求结构体
     response/            # 响应结构体

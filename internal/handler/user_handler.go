@@ -87,9 +87,19 @@ func (h *UserHandler) UpdateUser(c *gin.Context) {
 }
 
 func (h *UserHandler) ChangeRole(c *gin.Context) {
-	userID, _ := strconv.ParseInt(c.Param("userId"), 10, 64)
-	roles := c.PostForm("roles")
-	user, err := h.userService.ChangeRole(c, userID, roles)
+	userID, err := strconv.ParseInt(c.Param("userId"), 10, 64)
+	if err != nil {
+		response.Fail(c, "userId 必须是整数")
+		return
+	}
+
+	var req request.ChangeRoleRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.Fail(c, err.Error())
+		return
+	}
+
+	user, err := h.userService.ChangeRoleByIds(c.Request.Context(), userID, req)
 	if err != nil {
 		response.Fail(c, err.Error())
 		return

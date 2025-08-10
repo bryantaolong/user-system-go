@@ -1,8 +1,9 @@
 package router
 
 import (
-	"github.com/go-redis/redis/v8"
 	"time"
+
+	"github.com/go-redis/redis/v8"
 
 	"github.com/bryantaolong/system/internal/handler"
 	"github.com/bryantaolong/system/internal/middleware"
@@ -15,6 +16,7 @@ func NewRouter(
 	redisClient *redis.Client,
 	authService *service.AuthService,
 	userService *service.UserService,
+	userRoleService *service.UserRoleService,
 ) *gin.Engine {
 	r := gin.New()
 	r.Use(gin.Logger(), gin.Recovery())
@@ -30,6 +32,7 @@ func NewRouter(
 
 	authHandler := handler.NewAuthHandler(authService)
 	userHandler := handler.NewUserHandler(userService)
+	userRoleHandler := handler.NewUserRoleHandler(userRoleService)
 
 	// 公开接口
 	public := r.Group("/api/auth")
@@ -60,6 +63,8 @@ func NewRouter(
 			admin.PUT("/:userId/block", userHandler.BlockUser)
 			admin.PUT("/:userId/unblock", userHandler.UnblockUser)
 			admin.DELETE("/:userId", userHandler.DeleteUser)
+
+			admin.GET("/role/all", userRoleHandler.ListRoles)
 		}
 	}
 
