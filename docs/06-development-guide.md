@@ -34,7 +34,7 @@ mysql -u root -p user_system < sql/create_table_mysql.sql
 
 ### 3. 配置文件
 
-编辑 `src/main/resources/application-dev.yaml`：
+编辑 `backend/src/main/resources/application-dev.yaml`：
 
 ```yaml
 spring:
@@ -60,6 +60,7 @@ jwt:
 
 ```bash
 # 开发模式启动
+cd backend
 ./mvnw spring-boot:run
 
 # 或者使用 IDE 运行 UserSystemApplication.java
@@ -315,12 +316,15 @@ class UserServiceTest {
 
 ```bash
 # 运行单元测试
+cd backend
 ./mvnw test
 
 # 运行特定测试类
+cd backend
 ./mvnw test -Dtest=UserServiceTest
 
 # 运行特定测试方法
+cd backend
 ./mvnw test -Dtest=UserServiceTest#testCreateUser
 ```
 
@@ -395,8 +399,8 @@ curl -X GET http://localhost:8080/api/users/1 \
 **解决**:
 1. 检查 Mapper 接口的 `@Mapper` 注解
 2. 确认 XML 文件的 namespace 与接口全限定名一致
-3. 检查 XML 文件位置是否在 `src/main/resources/mapper/` 下
-4. 清理并重新构建项目：`./mvnw clean install`
+3. 检查 XML 文件位置是否在 `backend/src/main/resources/mapper/` 下
+4. 清理并重新构建项目：先进入 `backend` 目录，再执行 `./mvnw clean install`
 
 ### Q2: 数据库连接失败？
 
@@ -534,12 +538,15 @@ git commit -m "docs(user): update API documentation"
 
 ```bash
 # 运行测试
+cd backend
 ./mvnw test
 
 # 检查代码格式
+cd backend
 ./mvnw spotless:check
 
 # 构建项目
+cd backend
 ./mvnw clean package
 ```
 

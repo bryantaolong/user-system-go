@@ -21,25 +21,31 @@ This project is a user management system based on Spring Boot 3, supporting user
 ## Project Structure
 
 ```
-src/
-  main/
-    java/com/bryan/system/
-      config/         # Configuration classes (security, Redis, MyBatis-Plus, etc.)
-      controller/     # RESTful controllers
-      domain/         # Entities, request/response objects, VO
-      filter/         # JWT authentication filter
-      handler/        # Global exception handler, PostgreSQL type handler
-      mapper/         # MyBatis mapper interfaces
-      service/        # Service layer
-      util/           # Utility classes (JWT, HTTP, etc.)
-    resources/
-      application.yaml
-      application-dev.yaml
-      application-mysql.yaml
-      mapper/         # MyBatis mapper xmls
-  test/
-    java/com/bryan/system/
-      UserSystemApplicationTests.java
+backend/
+  src/
+    main/
+      java/com/bryan/system/
+        config/         # Configuration classes (security, Redis, MyBatis, etc.)
+        controller/     # RESTful controllers
+        domain/         # Entities, request/response objects, VO
+        filter/         # JWT authentication filter
+        handler/        # Global exception handler
+        mapper/         # MyBatis mapper interfaces
+        service/        # Service layer
+        util/           # Utility classes (JWT, HTTP, etc.)
+      resources/
+        application.yaml
+        application-dev.yaml
+        application-mysql.yaml
+        mapper/         # MyBatis mapper xmls
+    test/
+      java/com/bryan/system/
+        UserSystemApplicationTests.java
+  pom.xml
+  mvnw
+frontend/
+  src/
+  package.json
 ```
 
 ## Requirements
@@ -51,8 +57,8 @@ src/
 
 ## Configuration
 
-* Update database and Redis settings in `src/main/resources/application-dev.yaml`.
-* General settings (logging, MyBatis, etc.) are in `src/main/resources/application.yaml`.
+* Update database and Redis settings in `backend/src/main/resources/application-dev.yaml`.
+* General settings (logging, MyBatis, etc.) are in `backend/src/main/resources/application.yaml`.
 * Database schema scripts are in [`sql/create_table.sql`](sql/create_table.sql).
 
 ## Getting Started
@@ -68,13 +74,15 @@ src/
 3. Build and run the project with Maven:
 
    ```sh
+   cd backend
    ./mvnw spring-boot:run
    ```
 
    Or run the packaged jar:
 
    ```sh
-   mvn clean package
+   cd backend
+   ./mvnw clean package
    java -jar target/user-system-0.0.1-SNAPSHOT.jar
    ```
 
@@ -84,13 +92,13 @@ src/
 * User login: `POST /api/auth/login`
 * Get all users: `GET /api/user/all` (admin only)
 * Search users: `POST /api/user/search`
-* User update, role change, password update, ban/unban, logical delete, etc. are detailed in [`UserController`](src/main/java/com/bryan/system/controller/user/UserController.java)
+* User update, role change, password update, ban/unban, logical delete, etc. are detailed in [`UserController`](backend/src/main/java/com/bryan/system/controller/user/UserController.java)
 * Export user data: `GET /api/user/export/all`, `POST /api/user/export/field` (admin only)
 
 ## Notes
 
 * For production, inject JWT secret via configuration file instead of hardcoding.
-* Global exception handling is in [`GlobalExceptionHandler`](src/main/java/com/bryan/system/handler/GlobalExceptionHandler.java).
+* Global exception handling is in [`GlobalExceptionHandler`](backend/src/main/java/com/bryan/system/handler/GlobalExceptionHandler.java).
 * Logical delete field is `deleted`: 0 means active, 1 means deleted.
 
 ## License

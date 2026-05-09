@@ -25,7 +25,7 @@
 ## 模块结构
 
 ```
-src/main/java/com/bryan/system/
+backend/src/main/java/com/bryan/system/
 ├── controller/user/          # 控制器层
 │   ├── UserController.java
 │   ├── UserProfileController.java
@@ -62,12 +62,17 @@ src/main/java/com/bryan/system/
 │       └── GenderEnum.java
 └── ...
 
-src/main/resources/
+backend/src/main/resources/
 ├── mapper/
 │   ├── UserMapper.xml
 │   ├── UserProfileMapper.xml
 │   └── UserRoleMapper.xml
 └── ...
+
+frontend/src/
+├── api/
+├── views/
+└── components/
 ```
 
 ## 数据库表
@@ -133,7 +138,7 @@ mysql -u root -p your_database < sql/create_table_mysql.sql
 
 ### 2. 配置数据库连接
 
-编辑 `src/main/resources/application-dev.yaml`：
+编辑 `backend/src/main/resources/application-dev.yaml`：
 
 ```yaml
 spring:
@@ -146,6 +151,7 @@ spring:
 ### 3. 启动应用
 
 ```bash
+cd backend
 ./mvnw spring-boot:run
 ```
 

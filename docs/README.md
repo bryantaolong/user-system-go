@@ -98,7 +98,7 @@
 ## 项目结构
 
 ```
-src/main/java/com/bryan/system/
+backend/src/main/java/com/bryan/system/
 ├── controller/user/          # 用户相关控制器
 ├── service/user/             # 用户相关服务
 ├── mapper/                   # 数据访问层
@@ -110,9 +110,14 @@ src/main/java/com/bryan/system/
 │   └── enums/user/          # 枚举类
 └── ...
 
-src/main/resources/
+backend/src/main/resources/
 ├── mapper/                   # MyBatis XML 映射文件
 └── application*.yaml         # 配置文件
+
+frontend/src/
+├── api/                      # 前端接口封装
+├── views/                    # 页面视图
+└── components/               # 组件
 
 sql/
 ├── create_table.sql          # PostgreSQL 初始化脚本
@@ -133,7 +138,7 @@ mysql -u root -p your_database < sql/create_table_mysql.sql
 
 ### 2. 配置应用
 
-编辑 `src/main/resources/application-dev.yaml`：
+编辑 `backend/src/main/resources/application-dev.yaml`：
 
 ```yaml
 spring:
@@ -146,6 +151,7 @@ spring:
 ### 3. 启动应用
 
 ```bash
+cd backend
 ./mvnw spring-boot:run
 ```
 
