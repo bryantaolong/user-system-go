@@ -1,0 +1,29 @@
+spring:
+  config:
+    activate:
+      on-profile: mysql
+  datasource:
+    url: jdbc:mysql://localhost:3306/user_system?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai
+    username: "${DB_USERNAME:root}"
+    password: "${DB_PASSWORD:123456}"
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      connection-timeout: 30000
+      maximum-pool-size: 20
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password: "${REDIS_PASSWORD:123456}"
+      database: 1
+
+# MyBatis 配置（MySQL 版本）
+mybatis:
+  mapper-locations: classpath*:/mapper-mysql/**/*Mysql.xml
+  type-aliases-package: com.bryan.system.domain.entity
+  configuration:
+    map-underscore-to-camel-case: true
+    default-enum-type-handler: org.apache.ibatis.type.EnumOrdinalTypeHandler
+
+server:
+  port: 8080

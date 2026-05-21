@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bryan.system.mapper.UserMapper">
+
+    <resultMap id="BaseResultMap" type="com.bryan.system.domain.entity.SysUser">
+        <id column="id" property="id"/>
+        <result column="username" property="username"/>
+        <result column="password" property="password"/>
+        <result column="phone" property="phone"/>
+        <result column="email" property="email"/>
+        <result column="roles" property="roles"/>
+        <result column="status" property="status"/>
+        <result column="login_fail_count" property="loginFailCount"/>
+        <result column="last_login_at" property="lastLoginAt"/>
+        <result column="last_login_ip" property="lastLoginIp"/>
+        <result column="last_login_device" property="lastLoginDevice"/>
+        <result column="password_reset_at" property="passwordResetAt"/>
+
+        <result column="locked_at" property="lockedAt"/>
+        <result column="deleted" property="deleted"/>
+        <result column="version" property="version"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+        <result column="created_by" property="createdBy"/>
+        <result column="updated_by" property="updatedBy"/>
+    </resultMap>
+
+    <sql id="BaseColumns">
+        id, username, password, phone, email, roles, status,
+        login_fail_count, last_login_at, last_login_ip, last_login_device,
+        password_reset_at, locked_at, deleted, version,
+        created_at, updated_at, created_by, updated_by
+    </sql>
+
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO sys_user (
+            username, password, phone, email, roles, status,
+            login_fail_count, last_login_at, last_login_ip, last_login_device,
+            password_reset_at, locked_at, deleted, version,
+            created_at, updated_at, created_by, updated_by
+        ) VALUES (
+                     #{username}, #{password}, #{phone}, #{email}, #{roles}, #{status},
+                     #{loginFailCount}, #{lastLoginAt}, #{lastLoginIp}, #{lastLoginDevice},
+                     #{passwordResetAt}, #{lockedAt}, #{deleted}, #{version},
+                     #{createdAt}, #{updatedAt}, #{createdBy}, #{updatedBy}
+                 )
+    </insert>
+
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM sys_user
+        WHERE id = #{id}
+        AND deleted = 0
+        LIMIT 1
+    </select>
+
+    <select id="selectByUsername" resultMap="BaseResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM sys_user
+        WHERE username = #{username}
+        AND deleted = 0
+        LIMIT 1
+    </select>
+
+    <select id="selectPage" resultMap="BaseResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM sys_user
+        <where>
+            <include refid="SearchWhere"/>
+        </where>
+        ORDER BY updated_at ASC
+        LIMIT #{offset}, #{pageSize}
+    </select>
+
+    <select id="selectExportPage" resultMap="BaseResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM sys_user
+        ORDER BY updated_at ASC
+        LIMIT #{offset}, #{pageSize}
+    </select>
+
+    <select id="selectByIdList" resultMap="BaseResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM sys_user
+        WHERE id IN
+        <foreach collection="ids" item="id" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+    </select>
+
+    <select id="selectByStatus" resultMap="BaseResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM sys_user
+        WHERE status = #{status}
+        AND deleted = 0
+    </select>
+
+    <update id="update" parameterType="com.bryan.system.domain.entity.SysUser">
+        UPDATE sys_user
+        <set>
+            <if test="username != null">username = #{username},</if>
+            <if test="password != null">password = #{password},</if>
+            <if test="phone != null">phone = #{phone},</if>
+            <if test="email != null">email = #{email},</if>
+            <if test="roles != null">roles = #{roles},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="loginFailCount != null">login_fail_count = #{loginFailCount},</if>
+            <if test="lastLoginAt != null">last_login_at = #{lastLoginAt},</if>
+            <if test="lastLoginIp != null">last_login_ip = #{lastLoginIp},</if>
+            <if test="lastLoginDevice != null">last_login_device = #{lastLoginDevice},</if>
+            <if test="passwordResetAt != null">password_reset_at = #{passwordResetAt},</if>
+            <if test="lockedAt != null">locked_at = #{lockedAt},</if>
+            updated_at = #{updatedAt},
+            updated_by = #{updatedBy},
+            version = #{version}
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <update id="deleteById">
+        UPDATE sys_user
+        SET deleted = 1,
+            updated_at = #{updatedAt},
+            updated_by = #{updatedBy}
+        WHERE id = #{id}
+          AND deleted = 0
+    </update>
+
+    <select id="count" resultType="long">
+        SELECT COUNT(*)
+        FROM sys_user
+        <where>
+            <include refid="SearchWhere"/>
+        </where>
+    </select>
+
+    <sql id="SearchWhere">
+        <if test="req != null">
+            <if test="req.username != null and req.username != ''">
+                AND username LIKE CONCAT('%', #{req.username}, '%')
+            </if>
+            <if test="req.phone != null and req.phone != ''">
+                AND phone LIKE CONCAT('%', #{req.phone}, '%')
+            </if>
+            <if test="req.email != null and req.email != ''">
+                AND email LIKE CONCAT('%', #{req.email}, '%')
+            </if>
+            <if test="req.status != null">
+                AND status = #{req.status}
+            </if>
+        </if>
+    </sql>
+</mapper>

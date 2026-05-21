@@ -1,0 +1,39 @@
+server:
+  port: 8080
+
+database:
+  driver: postgres
+  host: localhost
+  port: 5432
+  username: postgres
+  password: "082400"
+  dbname: postgres
+  sslmode: disable
+  max_open_conns: 20
+  conn_max_lifetime: 30000
+
+redis:
+  host: localhost
+  port: 6379
+  password: "123456"
+  db: 1
+
+jwt:
+  secret_key: "BryanTaoLong2025!@#SuperSecretKeyJwtToken987"
+  expiration_ms: 86400000
+  token_prefix: "Bearer "
+
+security:
+  login_fail_limit: 5
+  login_fail_reset_minutes: 30
+  account_lock_duration_minutes: 30
+
+file:
+  upload_dir: ./uploads
+
+cors:
+  allowed_origins: "http://localhost:5173"
+
+logging:
+  level: info
+  file: logs/user-system.log

@@ -1,0 +1,33 @@
+package middleware
+
+import (
+	"net/http"
+
+	"github.com/bryan/user-system/internal/pkg/response"
+	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
+)
+
+// ErrorHandler 全局异常处理中间件
+func ErrorHandler(logger *zap.Logger) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Next()
+
+		// 处理 gin 绑定错误等
+		if len(c.Errors) > 0 {
+			err := c.Errors.Last().Err
+			logger.Error("请求处理异常", zap.Error(err))
+
+			switch e := err.(type) {
+			case *response.BusinessException:
+				response.Error(c, response.StatusInternalError, e.Message)
+			case *response.ResourceNotFoundException:
+				response.Error(c, response.StatusNotFound, e.Message)
+			case *response.UnauthorizedException:
+				response.ErrorWithHTTPStatus(c, http.StatusUnauthorized, response.StatusUnauthorized, e.Message)
+			default:
+				response.Error(c, response.StatusInternalError, "服务繁忙，请稍后重试")
+			}
+		}
+	}
+}
