@@ -2,47 +2,35 @@
 
 ## Project Overview
 
-This project is a user management system based on Spring Boot 3, supporting user registration, login, information management, role-based access control, and data export. The backend uses PostgreSQL as the main database and Redis for caching and distributed scenarios. JWT is used for stateless authentication and role-based authorization.
+This project is a user management system based on Go (Gin framework), supporting user registration, login, information management, role-based access control, and data export. The backend uses PostgreSQL as the main database and Redis for caching and distributed scenarios. JWT is used for stateless authentication and role-based authorization.
 
 ## Tech Stack
 
-* Java 17
-* Spring Boot 3.5.4
-* MyBatis
-* PostgreSQL 17.x
-* MySQL 8.0.x
-* Redis
-* Spring Security
-* EasyExcel (Alibaba Excel export)
-* Lombok
-* JJWT (JWT token)
-* Maven 3.9.x
+* Go 1.22
+* Gin - Web framework
+* GORM - ORM
+* go-redis/v9 - Redis client
+* golang-jwt/v5 - JWT authentication
+* Viper - Configuration management
+* Zap - Logging
+* excelize - Excel export
+* bcrypt - Password encryption
 
 ## Project Structure
 
 ```
 backend/
-  src/
-    main/
-      java/com/bryan/system/
-        config/         # Configuration classes (security, Redis, MyBatis, etc.)
-        controller/     # RESTful controllers
-        domain/         # Entities, request/response objects, VO
-        filter/         # JWT authentication filter
-        handler/        # Global exception handler
-        mapper/         # MyBatis mapper interfaces
-        service/        # Service layer
-        util/           # Utility classes (JWT, HTTP, etc.)
-      resources/
-        application.yaml
-        application-dev.yaml
-        application-mysql.yaml
-        mapper/         # MyBatis mapper xmls
-    test/
-      java/com/bryan/system/
-        UserSystemApplicationTests.java
-  pom.xml
-  mvnw
+  cmd/server/          # Application entry point
+  internal/
+    config/            # Configuration loading
+    handler/           # HTTP handlers
+    middleware/        # Middleware (auth, CORS, error handling)
+    model/             # Data models & DTOs
+    pkg/               # Utility packages (JWT, Redis, HTTP, response)
+    repository/        # Data access layer
+    service/           # Business logic layer
+  config.yaml          # Configuration file
+  go.mod
 frontend/
   src/
   package.json
@@ -50,15 +38,13 @@ frontend/
 
 ## Requirements
 
-* JDK 17+
-* Maven 3.9.9+
-* PostgreSQL 17.x/MySQL 8.0.x
+* Go 1.22+
+* PostgreSQL 17.x / MySQL 8.0.x
 * Redis 6.x or above
 
 ## Configuration
 
-* Update database and Redis settings in `backend/src/main/resources/application-dev.yaml`.
-* General settings (logging, MyBatis, etc.) are in `backend/src/main/resources/application.yaml`.
+* Edit `backend/config.yaml` to configure database, Redis, JWT, and other parameters.
 * Database schema scripts are in [`sql/create_table.sql`](sql/create_table.sql).
 
 ## Getting Started
@@ -71,34 +57,28 @@ frontend/
    psql -U postgres -d postgres -f sql/create_table.sql
    ```
 2. Start the Redis service.
-3. Build and run the project with Maven:
+3. Install dependencies and run the project:
 
    ```sh
    cd backend
-   ./mvnw spring-boot:run
-   ```
-
-   Or run the packaged jar:
-
-   ```sh
-   cd backend
-   ./mvnw clean package
-   java -jar target/user-system-0.0.1-SNAPSHOT.jar
+   go mod tidy
+   go run cmd/server/main.go
    ```
 
 ## Main APIs
 
 * User registration: `POST /api/auth/register`
 * User login: `POST /api/auth/login`
-* Get all users: `GET /api/user/all` (admin only)
-* Search users: `POST /api/user/search`
-* User update, role change, password update, ban/unban, logical delete, etc. are detailed in [`UserController`](backend/src/main/java/com/bryan/system/controller/user/UserController.java)
-* Export user data: `GET /api/user/export/all`, `POST /api/user/export/field` (admin only)
+* Get current user: `GET /api/auth/me`
+* Get all users: `GET /api/users` (admin only)
+* Search users: `POST /api/users/search`
+* User update, role change, password update, ban/unban, logical delete, etc.
+* Export user data: `GET /api/users/export` (admin only)
+* User profiles: avatar upload, profile CRUD
 
 ## Notes
 
 * For production, inject JWT secret via configuration file instead of hardcoding.
-* Global exception handling is in [`GlobalExceptionHandler`](backend/src/main/java/com/bryan/system/handler/GlobalExceptionHandler.java).
 * Logical delete field is `deleted`: 0 means active, 1 means deleted.
 
 ## License
