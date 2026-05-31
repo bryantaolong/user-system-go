@@ -9,33 +9,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type UserExportHandler struct {
-	exportSvc *service.UserExportService
-}
-
-func NewUserExportHandler(exportSvc *service.UserExportService) *UserExportHandler {
-	return &UserExportHandler{exportSvc: exportSvc}
-}
-
-// ExportAllUsers 导出所有用户数据为 Excel
-func (h *UserExportHandler) ExportAllUsers(c *gin.Context) {
-	pageNum, _ := strconv.Atoi(c.DefaultQuery("pageNum", "1"))
-	_ = pageNum // 导出服务内部处理分页
-
-	f, err := h.exportSvc.ExportAllUsers()
-	if err != nil {
-		handleError(c, err)
-		return
-	}
-
-	c.Header("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-	c.Header("Content-Disposition", "attachment; filename=users.xlsx")
-
-	if err := f.Write(c.Writer); err != nil {
-		response.Error(c, response.StatusInternalError, "导出文件写入失败")
-	}
-}
-
 // SystemLogHandler 系统日志处理器
 type SystemLogHandler struct {
 	logSvc *service.LogService

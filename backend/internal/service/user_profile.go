@@ -37,14 +37,17 @@ func NewUserProfileService(
 
 // CreateUserProfile 创建用户资料
 func (s *UserProfileService) CreateUserProfile(ctx context.Context, record *model.UserProfile) (*model.UserProfile, error) {
+	now := time.Now()
 	operator := getCurrentOperator(ctx)
 	record.Deleted = 0
 	record.Version = 0
+	record.CreatedAt = now
+	record.UpdatedAt = now
 	record.CreatedBy = &operator
 	record.UpdatedBy = &operator
 
 	if err := s.profileRepo.Insert(record); err != nil {
-		return nil, response.NewBusinessException("创建用户信息失败")
+		return nil, response.NewPersistenceError("创建用户信息失败")
 	}
 	s.logger.Info("用户信息创建成功", zap.Int64("userId", record.UserID))
 	return record, nil
@@ -54,7 +57,7 @@ func (s *UserProfileService) CreateUserProfile(ctx context.Context, record *mode
 func (s *UserProfileService) GetUserProfileByUserId(ctx context.Context, userID int64) (*model.UserProfile, error) {
 	profile, err := s.profileRepo.SelectByUserID(userID)
 	if err != nil {
-		return nil, response.NewResourceNotFoundException("用户信息不存在")
+		return nil, response.NewResourceNotFoundError("用户信息不存在")
 	}
 	return profile, nil
 }
@@ -73,7 +76,7 @@ func (s *UserProfileService) GetUserProfileByUserIdOrEmpty(ctx context.Context, 
 func (s *UserProfileService) GetUserProfileByRealName(ctx context.Context, realName string) (*model.UserProfile, error) {
 	profile, err := s.profileRepo.SelectByRealName(realName)
 	if err != nil {
-		return nil, response.NewResourceNotFoundException("用户信息不存在")
+		return nil, response.NewResourceNotFoundError("用户信息不存在")
 	}
 	return profile, nil
 }
@@ -101,10 +104,11 @@ func (s *UserProfileService) UpdateUserProfile(ctx context.Context, userID int64
 	}
 
 	profile.Version++
+	profile.UpdatedAt = time.Now()
 	profile.UpdatedBy = strPtr(getCurrentOperator(ctx))
 
 	if err := s.profileRepo.Update(profile); err != nil {
-		return nil, response.NewBusinessException("用户信息更新失败")
+		return nil, response.NewPersistenceError("用户信息更新失败")
 	}
 
 	s.logger.Info("用户信息更新成功", zap.Int64("userId", userID))
@@ -120,7 +124,7 @@ func (s *UserProfileService) UpdateAvatar(ctx context.Context, userID int64, fil
 
 	avatarPath, err := s.fileSvc.StoreFile(file, "avatars")
 	if err != nil {
-		return "", response.NewBusinessException("头像上传失败: " + err.Error())
+		return "", response.NewPersistenceError("头像上传失败: " + err.Error())
 	}
 
 	// 删除旧头像
@@ -130,10 +134,11 @@ func (s *UserProfileService) UpdateAvatar(ctx context.Context, userID int64, fil
 
 	profile.Avatar = &avatarPath
 	profile.Version++
+	profile.UpdatedAt = time.Now()
 	profile.UpdatedBy = strPtr(getCurrentOperator(ctx))
 
 	if err := s.profileRepo.Update(profile); err != nil {
-		return "", response.NewBusinessException("头像更新失败")
+		return "", response.NewPersistenceError("头像更新失败")
 	}
 
 	s.logger.Info("用户头像更新成功", zap.Int64("userId", userID), zap.String("path", avatarPath))
@@ -177,7 +182,7 @@ func (s *LocalFileService) StoreFile(file *multipart.FileHeader, subDir string) 
 		return "", io.ErrUnexpectedEOF
 	}
 	if !isValidImageType(buf[:n]) {
-		return "", response.NewBusinessException("不支持的文件类型，仅允许 PNG、JPEG、GIF、WebP 格式")
+		return "", response.NewBusinessError("不支持的文件类型，仅允许 PNG、JPEG、GIF、WebP 格式")
 	}
 	src.Seek(0, 0)
 

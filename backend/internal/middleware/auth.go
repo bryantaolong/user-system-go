@@ -6,14 +6,14 @@ import (
 
 	"github.com/bryan/user-system/internal/model"
 	"github.com/bryan/user-system/internal/pkg/jwt"
-	pkgRedis "github.com/bryan/user-system/internal/pkg/redis"
+	"github.com/bryan/user-system/internal/pkg/redis"
 	"github.com/bryan/user-system/internal/pkg/response"
 	"github.com/bryan/user-system/internal/repository"
 	"github.com/gin-gonic/gin"
 )
 
 // AuthMiddleware JWT 认证中间件
-func AuthMiddleware(userRepo *repository.UserRepository, redisSvc *pkgRedis.RedisService) gin.HandlerFunc {
+func AuthMiddleware(userRepo *repository.UserRepository, redis *redis.RedisClient) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
 		tokenStr := jwt.ExtractToken(authHeader)
@@ -33,7 +33,7 @@ func AuthMiddleware(userRepo *repository.UserRepository, redisSvc *pkgRedis.Redi
 		}
 
 		// Redis 白名单验证
-		redisToken := redisSvc.Get(c.Request.Context(), claims.Username)
+		redisToken := redis.Get(c.Request.Context(), claims.Username)
 		if redisToken == "" || redisToken != tokenStr {
 			writeUnauthorized(c, "Token已失效，请重新登录")
 			c.Abort()

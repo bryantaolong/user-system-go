@@ -11,6 +11,7 @@ import (
 
 type UserHandler struct {
 	userSvc    *service.UserService
+	exportSvc  *service.UserService
 	profileSvc *service.UserProfileService
 }
 
@@ -81,7 +82,7 @@ func (h *UserHandler) GetUserByUsername(c *gin.Context) {
 
 // QueryUsers 用户搜索
 func (h *UserHandler) QueryUsers(c *gin.Context) {
-	var req model.UserSearchRequest
+	var req model.UserQueryRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.Error(c, response.StatusBadRequest, err.Error())
 		return
@@ -210,4 +211,23 @@ func (h *UserHandler) DeleteUser(c *gin.Context) {
 		return
 	}
 	response.Success(c, id)
+}
+
+// ExportAllUsers 导出所有用户数据为 Excel
+func (h *UserHandler) ExportAllUsers(c *gin.Context) {
+	pageNum, _ := strconv.Atoi(c.DefaultQuery("pageNum", "1"))
+	_ = pageNum // 导出服务内部处理分页
+
+	f, err := h.userSvc.ExportAllUsers()
+	if err != nil {
+		handleError(c, err)
+		return
+	}
+
+	c.Header("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+	c.Header("Content-Disposition", "attachment; filename=users.xlsx")
+
+	if err := f.Write(c.Writer); err != nil {
+		response.Error(c, response.StatusInternalError, "导出文件写入失败")
+	}
 }

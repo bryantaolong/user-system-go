@@ -35,18 +35,18 @@ func (r *UserRepository) SelectByUsername(username string) (*model.SysUser, erro
 	return &user, nil
 }
 
-func (r *UserRepository) SelectPage(offset, pageSize int, req *model.UserSearchRequest) ([]model.SysUser, error) {
+func (r *UserRepository) SelectPageByConditions(offset, pageSize int, req *model.UserQueryRequest) ([]model.SysUser, error) {
 	var users []model.SysUser
 	query := r.db.Where("deleted = 0")
-	query = r.applySearch(query, req)
+	query = r.applyQuery(query, req)
 	err := query.Order("updated_at ASC").Offset(offset).Limit(pageSize).Find(&users).Error
 	return users, err
 }
 
-func (r *UserRepository) Count(req *model.UserSearchRequest) (int64, error) {
+func (r *UserRepository) Count(req *model.UserQueryRequest) (int64, error) {
 	var count int64
 	query := r.db.Model(&model.SysUser{}).Where("deleted = 0")
-	query = r.applySearch(query, req)
+	query = r.applyQuery(query, req)
 	err := query.Count(&count).Error
 	return count, err
 }
@@ -72,7 +72,7 @@ func (r *UserRepository) DeleteByID(id int64, updatedBy string) error {
 		}).Error
 }
 
-func (r *UserRepository) applySearch(query *gorm.DB, req *model.UserSearchRequest) *gorm.DB {
+func (r *UserRepository) applyQuery(query *gorm.DB, req *model.UserQueryRequest) *gorm.DB {
 	if req == nil {
 		return query
 	}

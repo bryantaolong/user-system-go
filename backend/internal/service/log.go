@@ -34,12 +34,12 @@ func (s *LogService) ListLatestLogs(fileName string, maxLines int) ([]string, er
 
 	path := s.resolveLogPath(fileName)
 	if _, err := os.Stat(path); os.IsNotExist(err) {
-		return nil, response.NewBusinessException("日志文件不存在，请检查日志配置")
+		return nil, response.NewBusinessError("日志文件不存在，请检查日志配置")
 	}
 
 	allLines, err := s.readAllLines(path)
 	if err != nil {
-		return nil, response.NewBusinessException("读取日志文件失败，请稍后重试")
+		return nil, response.NewBusinessError("读取日志文件失败，请稍后重试")
 	}
 	if len(allLines) == 0 {
 		return []string{}, nil

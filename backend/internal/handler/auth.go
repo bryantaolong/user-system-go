@@ -127,13 +127,13 @@ func (h *AuthHandler) Logout(c *gin.Context) {
 // handleError 统一错误处理
 func handleError(c *gin.Context, err error) {
 	switch e := err.(type) {
-	case *response.BusinessException:
+	case *response.BusinessError:
 		response.Error(c, response.StatusInternalError, e.Message)
-	case *response.ResourceNotFoundException:
+	case *response.ResourceNotFoundError:
 		response.Error(c, response.StatusNotFound, e.Message)
-	case *response.UnauthorizedException:
+	case *response.UnauthorizedError:
 		response.ErrorWithHTTPStatus(c, http.StatusUnauthorized, response.StatusUnauthorized, e.Message)
-	case *response.OptimisticLockException:
+	case *response.OptimisticLockError:
 		response.Error(c, response.StatusConflict, e.Message)
 	default:
 		response.Error(c, response.StatusInternalError, "服务繁忙，请稍后重试")

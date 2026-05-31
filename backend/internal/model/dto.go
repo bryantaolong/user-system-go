@@ -35,12 +35,12 @@ type UserCreateRequest struct {
 
 // UserUpdateRequest 更新用户请求
 type UserUpdateRequest struct {
-	Phone   *string `json:"phone" binding:"omitempty"`
-	Email   *string `json:"email" binding:"omitempty,email"`
+	Phone    *string `json:"phone" binding:"omitempty"`
+	Email    *string `json:"email" binding:"omitempty,email"`
 	RealName *string `json:"realName" binding:"omitempty"`
-	Gender  *int     `json:"gender" binding:"omitempty"`
-	Birthday *string  `json:"birthday" binding:"omitempty"` // ISO8601 date
-	Avatar  *string `json:"avatar" binding:"omitempty"`
+	Gender   *int    `json:"gender" binding:"omitempty"`
+	Birthday *string `json:"birthday" binding:"omitempty"` // ISO8601 date
+	Avatar   *string `json:"avatar" binding:"omitempty"`
 }
 
 // ChangeRoleRequest 修改角色请求
@@ -48,8 +48,8 @@ type ChangeRoleRequest struct {
 	RoleIDs []int `json:"roleIds" binding:"required,min=1"`
 }
 
-// UserSearchRequest 用户搜索请求
-type UserSearchRequest struct {
+// UserQueryRequest 用户查询请求
+type UserQueryRequest struct {
 	Username *string `json:"username" form:"username"`
 	Phone    *string `json:"phone" form:"phone"`
 	Email    *string `json:"email" form:"email"`

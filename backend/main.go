@@ -7,8 +7,8 @@ import (
 	"github.com/bryan/user-system/internal/config"
 	"github.com/bryan/user-system/internal/handler"
 	"github.com/bryan/user-system/internal/middleware"
+	"github.com/bryan/user-system/internal/pkg/redis"
 	"github.com/bryan/user-system/internal/repository"
-	pkgRedis "github.com/bryan/user-system/internal/pkg/redis"
 	"github.com/bryan/user-system/internal/service"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
@@ -32,7 +32,7 @@ func main() {
 	}
 
 	// 4. 初始化 Redis
-	redisSvc := pkgRedis.NewRedisService(&cfg.Redis, logger)
+	redisSvc := redis.NewRedisClient(&cfg.Redis, logger)
 
 	// 5. 初始化 Repository
 	userRepo := repository.NewUserRepository(db)
@@ -45,7 +45,6 @@ func main() {
 	userProfileSvc := service.NewUserProfileService(userProfileRepo, localFileSvc, logger)
 	userSvc := service.NewUserService(userRepo, userRoleSvc, logger)
 	authSvc := service.NewAuthService(userRepo, userRoleRepo, redisSvc, logger)
-	userExportSvc := service.NewUserExportService(userRepo, logger)
 	logSvc := service.NewLogService(logger)
 
 	// 7. 初始化 Handler
@@ -53,7 +52,6 @@ func main() {
 	userHandler := handler.NewUserHandler(userSvc, userProfileSvc)
 	userProfileHandler := handler.NewUserProfileHandler(userProfileSvc, userSvc, authSvc)
 	userRoleHandler := handler.NewUserRoleHandler(userRoleSvc)
-	userExportHandler := handler.NewUserExportHandler(userExportSvc)
 	systemLogHandler := handler.NewSystemLogHandler(logSvc)
 
 	// 8. 初始化 Gin 路由
@@ -72,7 +70,7 @@ func main() {
 	r.Static("/uploads", uploadDir)
 
 	// 注册路由
-	registerRoutes(r, authHandler, userHandler, userProfileHandler, userRoleHandler, userExportHandler, systemLogHandler)
+	registerRoutes(r, authHandler, userHandler, userProfileHandler, userRoleHandler, systemLogHandler)
 
 	// 9. 启动服务
 	addr := fmt.Sprintf(":%d", cfg.Server.Port)
@@ -117,7 +115,6 @@ func registerRoutes(
 	userHandler *handler.UserHandler,
 	userProfileHandler *handler.UserProfileHandler,
 	userRoleHandler *handler.UserRoleHandler,
-	userExportHandler *handler.UserExportHandler,
 	systemLogHandler *handler.SystemLogHandler,
 ) {
 	// Auth 路由
@@ -167,7 +164,7 @@ func registerRoutes(
 	// User Export 路由
 	export := r.Group("/api/users/export")
 	{
-		export.GET("", middleware.RequireRole("ADMIN"), userExportHandler.ExportAllUsers)
+		export.GET("", middleware.RequireRole("ADMIN"), userHandler.ExportAllUsers)
 	}
 
 	// Admin Logs 路由

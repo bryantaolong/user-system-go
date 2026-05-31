@@ -20,7 +20,7 @@ This project is a user management system based on Go (Gin framework), supporting
 
 ```
 backend/
-  cmd/server/          # Application entry point
+  main.go              # Application entry point
   internal/
     config/            # Configuration loading
     handler/           # HTTP handlers

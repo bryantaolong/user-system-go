@@ -19,11 +19,11 @@ func ErrorHandler(logger *zap.Logger) gin.HandlerFunc {
 			logger.Error("请求处理异常", zap.Error(err))
 
 			switch e := err.(type) {
-			case *response.BusinessException:
+			case *response.BusinessError:
 				response.Error(c, response.StatusInternalError, e.Message)
-			case *response.ResourceNotFoundException:
+			case *response.ResourceNotFoundError:
 				response.Error(c, response.StatusNotFound, e.Message)
-			case *response.UnauthorizedException:
+			case *response.UnauthorizedError:
 				response.ErrorWithHTTPStatus(c, http.StatusUnauthorized, response.StatusUnauthorized, e.Message)
 			default:
 				response.Error(c, response.StatusInternalError, "服务繁忙，请稍后重试")

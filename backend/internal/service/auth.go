@@ -19,20 +19,20 @@ import (
 type AuthService struct {
 	userRepo *repository.UserRepository
 	roleRepo *repository.UserRoleRepository
-	redisSvc *redis.RedisService
+	redis    *redis.RedisClient
 	logger   *zap.Logger
 }
 
 func NewAuthService(
 	userRepo *repository.UserRepository,
 	roleRepo *repository.UserRoleRepository,
-	redisSvc *redis.RedisService,
+	redisSvc *redis.RedisClient,
 	logger *zap.Logger,
 ) *AuthService {
 	return &AuthService{
 		userRepo: userRepo,
 		roleRepo: roleRepo,
-		redisSvc: redisSvc,
+		redis:    redisSvc,
 		logger:   logger,
 	}
 }
@@ -42,19 +42,19 @@ func (s *AuthService) Register(ctx context.Context, req *model.RegisterRequest) 
 	// 1. 检查用户名是否已存在
 	existing, _ := s.userRepo.SelectByUsername(req.Username)
 	if existing != nil {
-		return nil, response.NewBusinessException("用户名已存在")
+		return nil, response.NewBusinessError("用户名已存在")
 	}
 
 	// 2. 查出默认角色
 	defaultRole, err := s.roleRepo.SelectOneByIsDefaultTrue()
 	if err != nil || defaultRole == nil {
-		return nil, response.NewBusinessException("系统未配置默认角色")
+		return nil, response.NewBusinessError("系统未配置默认角色")
 	}
 
 	// 3. 构建用户实体，密码加密
 	hashedPwd, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 	if err != nil {
-		return nil, response.NewBusinessException("密码加密失败")
+		return nil, response.NewBusinessError("密码加密失败")
 	}
 
 	now := time.Now()
@@ -67,12 +67,12 @@ func (s *AuthService) Register(ctx context.Context, req *model.RegisterRequest) 
 		Password:        string(hashedPwd),
 		Phone:           &phone,
 		Email:           &email,
-		Roles:           &roles,
 		Status:          model.UserStatusNormal,
-		Deleted:         0,
-		Version:         0,
+		Roles:           &roles,
 		PasswordResetAt: &now,
 		LoginFailCount:  intPtr(0),
+		Deleted:         0,
+		Version:         0,
 		CreatedAt:       now,
 		UpdatedAt:       now,
 		CreatedBy:       strPtr(req.Username),
@@ -81,7 +81,7 @@ func (s *AuthService) Register(ctx context.Context, req *model.RegisterRequest) 
 
 	// 4. 插入用户数据
 	if err := s.userRepo.Insert(user); err != nil {
-		return nil, response.NewBusinessException("插入数据库失败")
+		return nil, response.NewBusinessError("插入数据库失败")
 	}
 
 	s.logger.Info("用户注册成功", zap.Int64("id", user.ID), zap.String("username", user.Username))
@@ -91,68 +91,77 @@ func (s *AuthService) Register(ctx context.Context, req *model.RegisterRequest) 
 // Login 用户登录
 func (s *AuthService) Login(ctx context.Context, req *model.LoginRequest, userAgent, clientIP string) (string, error) {
 	// 1. 验证用户凭证
-	sysUser, err := s.userRepo.SelectByUsername(req.Username)
-	if err != nil || sysUser == nil {
+	user, err := s.userRepo.SelectByUsername(req.Username)
+	if err != nil || user == nil {
 		s.logger.Warn("登录失败 - 用户不存在", zap.String("username", req.Username))
-		return "", response.NewBusinessException("用户名或密码错误")
+		return "", response.NewBusinessError("用户名或密码错误")
 	}
 
 	// 2. 验证密码
-	if err := bcrypt.CompareHashAndPassword([]byte(sysUser.Password), []byte(req.Password)); err != nil {
+	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)); err != nil {
 		currentFailCount := 0
-		if sysUser.LoginFailCount != nil {
-			currentFailCount = *sysUser.LoginFailCount
+		if user.LoginFailCount != nil {
+			currentFailCount = *user.LoginFailCount
 		}
-		sysUser.LoginFailCount = intPtr(currentFailCount + 1)
-		sysUser.UpdatedBy = strPtr(fmt.Sprintf("%d", sysUser.ID))
-		sysUser.Version++
+		user.LoginFailCount = intPtr(currentFailCount + 1)
+		oprator := user.Username
+		if oprator == "" {
+			oprator = "SYSTEM"
+		}
+		user.UpdatedBy = strPtr(oprator)
+		user.Version++
 
 		// 如果输入密码错误次数达到限额，则锁定账号
-		if *sysUser.LoginFailCount >= config.AppConfig.Security.LoginFailLimit {
+		if *user.LoginFailCount >= config.AppConfig.Security.LoginFailLimit {
 			now := time.Now()
-			sysUser.Status = model.UserStatusLocked
-			sysUser.LockedAt = &now
-			_ = s.userRepo.Update(sysUser)
-			s.logger.Warn("用户登录失败次数过多，已锁定", zap.String("username", sysUser.Username))
-			return "", response.NewBusinessException("输入密码错误次数过多，账号锁定")
+			user.Status = model.UserStatusLocked
+			user.LockedAt = &now
+			_ = s.userRepo.Update(user)
+			s.logger.Warn("用户登录失败次数过多，已锁定", zap.String("username", user.Username))
+			return "", response.NewBusinessError("输入密码错误次数过多，账号锁定")
 		}
-		_ = s.userRepo.Update(sysUser)
-		s.logger.Warn("用户登录密码错误", zap.String("username", sysUser.Username), zap.Int("failCount", *sysUser.LoginFailCount))
-		return "", response.NewBusinessException("用户名或密码错误")
+		_ = s.userRepo.Update(user)
+		s.logger.Warn("用户登录密码错误", zap.String("username", user.Username), zap.Int("failCount", *user.LoginFailCount))
+		return "", response.NewBusinessError("用户名或密码错误")
 	}
 
 	// 3. 检查现有 Token
-	existingToken := s.redisSvc.Get(ctx, sysUser.Username)
+	existingToken := s.redis.Get(ctx, user.Username)
 	if existingToken != "" && jwt.ValidateToken(existingToken) {
 		// 刷新 Redis 中的 Token 过期时间
-		s.redisSvc.SetExpire(ctx, sysUser.Username, config.AppConfig.JWT.ExpirationMs/1000)
+		s.redis.SetExpire(ctx, user.Username, config.AppConfig.JWT.ExpirationMs/1000)
 		return existingToken, nil
 	}
 
 	// 4. 更新用户登录信息
 	now := time.Now()
 	device := pkgHttp.GetClientOS(userAgent) + " / " + pkgHttp.GetClientAgent(userAgent)
-	sysUser.LastLoginAt = &now
-	sysUser.LastLoginIP = &clientIP
-	sysUser.LastLoginDevice = &device
-	sysUser.LoginFailCount = intPtr(0)
-	sysUser.UpdatedBy = strPtr(fmt.Sprintf("%d", sysUser.ID))
-	sysUser.Version++
-	_ = s.userRepo.Update(sysUser)
+	user.LastLoginAt = &now
+	user.LastLoginIP = &clientIP
+	user.LastLoginDevice = &device
+	user.LoginFailCount = intPtr(0)
+	oprator := user.Username
+	if oprator == "" {
+		oprator = "SYSTEM"
+	}
+	user.Version++
+	user.UpdatedAt = now
+	user.UpdatedBy = strPtr(oprator)
+	_ = s.userRepo.Update(user)
 
 	// 5. 生成新的 JWT Token
 	roles := ""
-	if sysUser.Roles != nil {
-		roles = *sysUser.Roles
+	if user.Roles != nil {
+		roles = *user.Roles
 	}
-	token, err := jwt.GenerateToken(sysUser.ID, sysUser.Username, roles)
+	token, err := jwt.GenerateToken(user.ID, user.Username, roles)
 	if err != nil {
-		return "", response.NewBusinessException("Token 生成失败")
+		return "", response.NewBusinessError("Token 生成失败")
 	}
 
 	// 6. 存储到 Redis
-	if !s.redisSvc.SetWithExpire(ctx, sysUser.Username, token, config.AppConfig.JWT.ExpirationMs/1000) {
-		return "", response.NewBusinessException("Token 存储失败")
+	if !s.redis.SetWithExpire(ctx, user.Username, token, config.AppConfig.JWT.ExpirationMs/1000) {
+		return "", response.NewBusinessError("Token 存储失败")
 	}
 
 	return token, nil
@@ -162,7 +171,7 @@ func (s *AuthService) Login(ctx context.Context, req *model.LoginRequest, userAg
 func (s *AuthService) GetCurrentUserID(ctx context.Context) (int64, error) {
 	claims, ok := ctx.Value("claims").(*jwt.Claims)
 	if !ok || claims == nil {
-		return 0, response.NewUnauthorizedException("未授权")
+		return 0, response.NewUnauthorizedError("未授权")
 	}
 	return claims.UserID, nil
 }
@@ -171,7 +180,7 @@ func (s *AuthService) GetCurrentUserID(ctx context.Context) (int64, error) {
 func (s *AuthService) GetCurrentUsername(ctx context.Context) (string, error) {
 	claims, ok := ctx.Value("claims").(*jwt.Claims)
 	if !ok || claims == nil {
-		return "", response.NewUnauthorizedException("未授权")
+		return "", response.NewUnauthorizedError("未授权")
 	}
 	return claims.Username, nil
 }
@@ -184,7 +193,7 @@ func (s *AuthService) GetCurrentUser(ctx context.Context) (*model.SysUser, error
 	}
 	user, err := s.userRepo.SelectByID(userID)
 	if err != nil {
-		return nil, response.NewResourceNotFoundException("用户不存在")
+		return nil, response.NewResourceNotFoundError("用户不存在")
 	}
 	return user, nil
 }
@@ -208,6 +217,31 @@ func (s *AuthService) ValidateToken(token string) bool {
 	return jwt.ValidateToken(token)
 }
 
+// RefreshToken 刷新 JWT Token
+func (s *AuthService) RefreshToken(ctx context.Context) (string, error) {
+	username, err := s.GetCurrentUsername(ctx)
+	if err != nil {
+		return "", err
+	}
+
+	existingToken := s.redis.Get(ctx, username)
+	if existingToken == "" || !jwt.ValidateToken(existingToken) {
+		return "", response.NewUnauthorizedError("Token 无效或已过期")
+	}
+
+	claims, _ := jwt.ParseToken(existingToken)
+	newToken, err := jwt.GenerateToken(claims.UserID, claims.Username, claims.Roles)
+	if err != nil {
+		return "", response.NewBusinessError("Token 生成失败")
+	}
+
+	if !s.redis.SetWithExpire(ctx, username, newToken, config.AppConfig.JWT.ExpirationMs/1000) {
+		return "", response.NewBusinessError("Token 存储失败")
+	}
+
+	return newToken, nil
+}
+
 // ChangePassword 修改用户密码
 func (s *AuthService) ChangePassword(ctx context.Context, oldPassword, newPassword string) (*model.SysUser, error) {
 	user, err := s.GetCurrentUser(ctx)
@@ -216,26 +250,32 @@ func (s *AuthService) ChangePassword(ctx context.Context, oldPassword, newPasswo
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(oldPassword)); err != nil {
-		return nil, response.NewBusinessException("旧密码不正确")
+		return nil, response.NewBusinessError("旧密码不正确")
 	}
 
 	hashedPwd, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
 	if err != nil {
-		return nil, response.NewBusinessException("密码加密失败")
+		return nil, response.NewBusinessError("密码加密失败")
 	}
 
 	now := time.Now()
 	user.Password = string(hashedPwd)
 	user.PasswordResetAt = &now
+	oprator := user.Username
+	if oprator == "" {
+		oprator = "SYSTEM"
+	}
+
 	user.Version++
-	user.UpdatedBy = strPtr(fmt.Sprintf("%d", user.ID))
+	user.UpdatedAt = now
+	user.UpdatedBy = strPtr(oprator)
 
 	if err := s.userRepo.Update(user); err != nil {
-		return nil, response.NewBusinessException("密码修改失败")
+		return nil, response.NewBusinessError("密码修改失败")
 	}
 
 	// 清除 Redis 中的旧 Token
-	if !s.redisSvc.Delete(ctx, user.Username) {
+	if !s.redis.Delete(ctx, user.Username) {
 		s.logger.Warn("用户密码更新成功，但清除旧 Token 失败", zap.Int64("userId", user.ID))
 	} else {
 		s.logger.Info("用户密码更新成功，旧 Token 已清除", zap.Int64("userId", user.ID))
@@ -250,8 +290,8 @@ func (s *AuthService) Logout(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	if !s.redisSvc.Delete(ctx, username) {
-		return response.NewBusinessException("Token 清除失败")
+	if !s.redis.Delete(ctx, username) {
+		return response.NewBusinessError("Token 清除失败")
 	}
 	return nil
 }
@@ -263,12 +303,18 @@ func (s *AuthService) DeleteAccount(ctx context.Context) (*model.SysUser, error)
 		return nil, err
 	}
 	if user == nil {
-		return nil, response.NewResourceNotFoundException("用户状态异常，无法注销")
+		return nil, response.NewResourceNotFoundError("用户状态异常，无法注销")
 	}
 	if err := s.userRepo.DeleteByID(user.ID, fmt.Sprintf("%d", user.ID)); err != nil {
-		return nil, response.NewBusinessException("注销失败")
+		return nil, response.NewBusinessError("注销失败")
 	}
-	s.logger.Info("用户注销成功", zap.Int64("userId", user.ID))
+
+	// 清除 Redis 中的 Token
+	if !s.redis.Delete(ctx, user.Username) {
+		s.logger.Warn("用户注销成功，但清除 Token 失败", zap.Int64("userId", user.ID))
+	} else {
+		s.logger.Info("用户注销成功，Token 已清除", zap.Int64("userId", user.ID))
+	}
 	return user, nil
 }
 

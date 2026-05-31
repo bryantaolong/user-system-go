@@ -73,50 +73,62 @@ func ErrorWithHTTPStatus(c *gin.Context, httpStatus int, code int, msg string) {
 	})
 }
 
-// BusinessException 业务异常
-type BusinessException struct {
+// BusinessError 业务异常
+type BusinessError struct {
 	Message string
 }
 
-func NewBusinessException(msg string) *BusinessException {
-	return &BusinessException{Message: msg}
+func NewBusinessError(msg string) *BusinessError {
+	return &BusinessError{Message: msg}
 }
-func (e *BusinessException) Error() string {
+func (e *BusinessError) Error() string {
 	return e.Message
 }
 
-// ResourceNotFoundException 资源不存在异常
-type ResourceNotFoundException struct {
+// ResourceNotFoundError 资源不存在异常
+type ResourceNotFoundError struct {
 	Message string
 }
 
-func NewResourceNotFoundException(msg string) *ResourceNotFoundException {
-	return &ResourceNotFoundException{Message: msg}
+func NewResourceNotFoundError(msg string) *ResourceNotFoundError {
+	return &ResourceNotFoundError{Message: msg}
 }
-func (e *ResourceNotFoundException) Error() string {
+func (e *ResourceNotFoundError) Error() string {
 	return e.Message
 }
 
-// UnauthorizedException 未授权异常
-type UnauthorizedException struct {
+// UnauthorizedError 未授权异常
+type UnauthorizedError struct {
 	Message string
 }
 
-func NewUnauthorizedException(msg string) *UnauthorizedException {
-	return &UnauthorizedException{Message: msg}
+func NewUnauthorizedError(msg string) *UnauthorizedError {
+	return &UnauthorizedError{Message: msg}
 }
-func (e *UnauthorizedException) Error() string {
+func (e *UnauthorizedError) Error() string {
 	return e.Message
 }
 
-// OptimisticLockException 乐观锁冲突异常
-type OptimisticLockException struct {
+// PersistenceError 持久化异常
+type PersistenceError struct {
 	Message string
 }
 
-func NewOptimisticLockException(msg string) *OptimisticLockException {
-	return &OptimisticLockException{Message: msg}
+func NewPersistenceError(msg string) *PersistenceError {
+	return &PersistenceError{Message: msg}
 }
-func (e *OptimisticLockException) Error() string {
+func (e *PersistenceError) Error() string {
+	return e.Message
+}
+
+// OptimisticLockError 乐观锁冲突异常
+type OptimisticLockError struct {
+	Message string
+}
+
+func NewOptimisticLockError(msg string) *OptimisticLockError {
+	return &OptimisticLockError{Message: msg}
+}
+func (e *OptimisticLockError) Error() string {
 	return e.Message
 }
