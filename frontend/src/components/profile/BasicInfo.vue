@@ -1,36 +1,34 @@
 <template>
-  <el-form ref="formRef" :model="form" :rules="rules" label-width="100px" class="info-form">
-    <el-form-item label="用户名">
-      <el-input :value="username" disabled/>
-    </el-form-item>
-    <el-form-item label="真实姓名" prop="realName">
-      <el-input v-model="form.realName" placeholder="请输入真实姓名"/>
-    </el-form-item>
-    <el-form-item label="性别" prop="gender">
-      <el-radio-group v-model="form.gender">
-        <el-radio :label="1">男</el-radio>
-        <el-radio :label="0">女</el-radio>
-      </el-radio-group>
-    </el-form-item>
-    <el-form-item label="生日" prop="birthday">
-      <el-date-picker v-model="form.birthday" type="date" placeholder="选择生日"
-                      value-format="YYYY-MM-DD"/>
-    </el-form-item>
-    <el-form-item label="手机号" prop="phone">
-      <el-input v-model="form.phone" placeholder="请输入手机号"/>
-    </el-form-item>
-    <el-form-item label="邮箱" prop="email">
-      <el-input v-model="form.email" placeholder="请输入邮箱"/>
-    </el-form-item>
-    <el-form-item>
-      <el-button type="primary" :loading="loading" @click="handleSave">保存修改</el-button>
-    </el-form-item>
-  </el-form>
+  <a-form ref="formRef" :model="form" class="info-form">
+    <a-form-item label="用户名">
+      <a-input :model-value="username" disabled/>
+    </a-form-item>
+    <a-form-item label="真实姓名" field="realName">
+      <a-input v-model="form.realName" placeholder="请输入真实姓名"/>
+    </a-form-item>
+    <a-form-item label="性别" field="gender">
+      <a-radio-group v-model="form.gender">
+        <a-radio :value="1">男</a-radio>
+        <a-radio :value="0">女</a-radio>
+      </a-radio-group>
+    </a-form-item>
+    <a-form-item label="生日" field="birthday">
+      <a-date-picker v-model="form.birthday" format="YYYY-MM-DD" />
+    </a-form-item>
+    <a-form-item label="手机号" field="phone">
+      <a-input v-model="form.phone" placeholder="请输入手机号"/>
+    </a-form-item>
+    <a-form-item label="邮箱" field="email">
+      <a-input v-model="form.email" placeholder="请输入邮箱"/>
+    </a-form-item>
+    <a-form-item>
+      <a-button type="primary" :loading="loading" @click="handleSave">保存修改</a-button>
+    </a-form-item>
+  </a-form>
 </template>
 
 <script setup lang="ts">
 import { ref, reactive, watch } from 'vue'
-import type { FormInstance } from 'element-plus'
 
 const props = defineProps<{
   username?: string
@@ -46,7 +44,7 @@ const props = defineProps<{
 
 const emit = defineEmits(['save'])
 
-const formRef = ref<FormInstance>()
+const formRef = ref()
 const form = reactive({ ...props.initialData })
 
 watch(() => props.initialData, (newVal) => {
@@ -54,24 +52,25 @@ watch(() => props.initialData, (newVal) => {
 }, { deep: true })
 
 const rules = {
-  realName: [{ min: 2, max: 20, message: '真实姓名长度应在2-20个字符之间', trigger: 'blur' }],
+  realName: [{ minLength: 2, maxLength: 20, message: '真实姓名长度应在2-20个字符之间', trigger: 'blur' }],
   phone: [{
-    validator: (_: any, value: string, callback: Function) => {
-      if (!value) return callback()
-      const pattern = /^1[3-9]\d{9}$/
-      pattern.test(value) ? callback() : callback(new Error('电话号码格式不正确'))
-    }, trigger: 'blur'
+    match: /^1[3-9]\d{9}$/,
+    message: '电话号码格式不正确',
+    trigger: 'blur'
   }],
-  email: [{ type: 'email', message: '邮箱格式不正确', trigger: 'blur' }]
+  email: [{type: 'email', message: '邮箱格式不正确', trigger: 'blur'}]
 }
 
 const handleSave = async () => {
   if (!formRef.value) return
-  await formRef.value.validate((valid) => {
+  try {
+    const valid = await formRef.value.validate()
     if (valid) {
       emit('save', { ...form })
     }
-  })
+  } catch (error) {
+    // 验证失败
+  }
 }
 </script>
 

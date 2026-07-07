@@ -1,6 +1,6 @@
 <template>
   <div class="user-management">
-    <el-card class="header-card">
+    <a-card class="header-card">
       <div class="header-content">
         <div class="title-section">
           <h2>用户管理</h2>
@@ -8,15 +8,16 @@
         </div>
         <!-- 右侧按钮组 -->
         <div class="button-group">
-          <el-button type="primary" :icon="Plus" @click="handleAddUser">
+          <a-button type="primary" @click="handleAddUser">
+            <template #icon><IconPlus /></template>
             新增用户
-          </el-button>
-          <el-button type="warning" @click="handleExportAllUsers">
+          </a-button>
+          <a-button type="warning" @click="handleExportAllUsers">
             导出用户数据
-          </el-button>
+          </a-button>
         </div>
       </div>
-    </el-card>
+    </a-card>
 
     <UserSearchForm
         @search="handleSearch"
@@ -57,8 +58,8 @@
 
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus } from '@element-plus/icons-vue'
+import { ArcoMessage, ArcoMessageBox } from '@/utils/arco-message'
+import { IconPlus } from '@arco-design/web-vue/es/icon'
 import * as userApi from '@/api/user/user'
 import * as userExportApi from '@/api/user/userExport'
 import * as userRoleApi from '@/api/user/userRole'
@@ -149,10 +150,10 @@ const loadUsers = async () => {
       userList.value = res.data.rows
       total.value = res.data.total
     } else {
-      ElMessage.error(res.message || '加载用户列表失败')
+      ArcoMessage.error(res.message || '加载用户列表失败')
     }
   } catch (error) {
-    ElMessage.error('加载用户列表失败')
+    ArcoMessage.error('加载用户列表失败')
     console.error('Load users error:', error)
   } finally {
     loading.value = false
@@ -231,29 +232,27 @@ const handleView = async (user: SysUser) => {
       currentUser.value = { ...user, ...res.data }
       detailDialogVisible.value = true
     } else {
-      ElMessage.error(res.message || '获取用户详情失败')
+      ArcoMessage.error(res.message || '获取用户详情失败')
     }
   } catch (error) {
-    ElMessage.error('获取用户详情失败')
+    ArcoMessage.error('获取用户详情失败')
     console.error('View user error:', error)
   }
 }
 
 const handleResetPassword = async (user: SysUser) => {
   try {
-    const { value } = await ElMessageBox.prompt('请输入新密码', '重置密码', {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
-      inputPattern: /^.{6,}$/,
-      inputErrorMessage: '密码至少6位',
-      inputType: 'password'
+    const { value } = await ArcoMessageBox.prompt('请输入新密码', '重置密码', {
+      confirmText: '确定',
+      cancelText: '取消',
+      placeholder: '请输入新密码'
     })
 
     const res = await userApi.resetPassword(user.id, value)
     if (res.code === 200) {
-      ElMessage.success('密码重置成功')
+      ArcoMessage.success('密码重置成功')
     } else {
-      ElMessage.error(res.message || '密码重置失败')
+      ArcoMessage.error(res.message || '密码重置失败')
     }
   } catch (error: any) {
     if (error !== 'cancel') {
@@ -264,7 +263,7 @@ const handleResetPassword = async (user: SysUser) => {
 
 const handleBlockUser = async (user: SysUser) => {
   try {
-    await ElMessageBox.confirm(
+    await ArcoMessageBox.confirm(
         `确定要封禁用户 "${user.username}" 吗？`,
         '警告',
         { type: 'warning' }
@@ -272,10 +271,10 @@ const handleBlockUser = async (user: SysUser) => {
 
     const res = await userApi.blockUser(user.id)
     if (res.code === 200) {
-      ElMessage.success('用户已封禁')
+      ArcoMessage.success('用户已封禁')
       loadUsers()
     } else {
-      ElMessage.error(res.message || '封禁失败')
+      ArcoMessage.error(res.message || '封禁失败')
     }
   } catch (error: any) {
     if (error !== 'cancel') {
@@ -286,7 +285,7 @@ const handleBlockUser = async (user: SysUser) => {
 
 const handleUnblockUser = async (user: SysUser) => {
   try {
-    await ElMessageBox.confirm(
+    await ArcoMessageBox.confirm(
         `确定要解封用户 "${user.username}" 吗？`,
         '提示',
         { type: 'info' }
@@ -294,10 +293,10 @@ const handleUnblockUser = async (user: SysUser) => {
 
     const res = await userApi.unblockUser(user.id)
     if (res.code === 200) {
-      ElMessage.success('用户已解封')
+      ArcoMessage.success('用户已解封')
       loadUsers()
     } else {
-      ElMessage.error(res.message || '解封失败')
+      ArcoMessage.error(res.message || '解封失败')
     }
   } catch (error: any) {
     if (error !== 'cancel') {
@@ -308,7 +307,7 @@ const handleUnblockUser = async (user: SysUser) => {
 
 const handleDeleteUser = async (user: SysUser) => {
   try {
-    await ElMessageBox.confirm(
+    await ArcoMessageBox.confirm(
         `确定要删除用户 "${user.username}" 吗？此操作不可恢复！`,
         '危险操作',
         { type: 'error' }
@@ -316,14 +315,14 @@ const handleDeleteUser = async (user: SysUser) => {
 
     const res = await userApi.deleteUser(user.id)
     if (res.code === 200) {
-      ElMessage.success('用户已删除')
+      ArcoMessage.success('用户已删除')
       // 如果当前页只有一条数据且不是第一页，返回上一页
       if (userList.value.length === 1 && pageNum.value > 1) {
         pageNum.value--
       }
       loadUsers()
     } else {
-      ElMessage.error(res.message || '删除失败')
+      ArcoMessage.error(res.message || '删除失败')
     }
   } catch (error: any) {
     if (error !== 'cancel') {
@@ -345,37 +344,37 @@ const handleSubmit = async (formData: UserFormData) => {
       }
       const res = await userApi.createUser(payload)
       if (res.code === 200) {
-        ElMessage.success('新增用户成功')
+        ArcoMessage.success('新增用户成功')
         dialogVisible.value = false
         loadUsers()
       } else {
-        ElMessage.error(res.message || '新增失败')
+        ArcoMessage.error(res.message || '新增失败')
       }
     } else {
       if (!currentUser.value) {
-        ElMessage.error('用户信息不存在')
+        ArcoMessage.error('用户信息不存在')
         return
       }
       const updateRes = await userApi.updateUser(currentUser.value.id, formData)
       if (updateRes.code !== 200) {
-        ElMessage.error(updateRes.message || '更新失败')
+        ArcoMessage.error(updateRes.message || '更新失败')
         return
       }
 
       if (formData.roleIds && formData.roleIds.length > 0) {
         const roleRes = await userApi.changeUserRoles(currentUser.value.id, formData.roleIds)
         if (roleRes.code !== 200) {
-          ElMessage.error(roleRes.message || '角色更新失败')
+          ArcoMessage.error(roleRes.message || '角色更新失败')
           return
         }
       }
 
-      ElMessage.success('更新成功')
+      ArcoMessage.success('更新成功')
       dialogVisible.value = false
       loadUsers()
     }
   } catch (error) {
-    ElMessage.error(dialogType.value === 'add' ? '新增失败' : '更新失败')
+    ArcoMessage.error(dialogType.value === 'add' ? '新增失败' : '更新失败')
     console.error('Submit user error:', error)
   } finally {
     submitting.value = false
@@ -400,26 +399,24 @@ const handleDialogClose = () => {
 /* ----------------- 导出功能 ----------------- */
 const handleExportAllUsers = async () => {
   try {
-    const result = await ElMessageBox.prompt(
+    const result = await ArcoMessageBox.prompt(
         '请输入导出文件名:',
         '导出所有用户',
         {
-          confirmButtonText: '确定',
-          cancelButtonText: '取消',
-          inputValue: '所有用户数据',
-          inputPattern: /.+/,
-          inputErrorMessage: '文件名不能为空',
+          confirmText: '确定',
+          cancelText: '取消',
+          placeholder: '请输入导出文件名'
         }
     )
 
     const fileName = result.value || '所有用户数据'
     // 传递当前筛选的状态
     await userExportApi.exportAllUsers(fileName, mapStatusToCode(searchFormData.status))
-    ElMessage.success('所有用户数据已开始导出！')
+    ArcoMessage.success('所有用户数据已开始导出！')
   } catch (error: any) {
     if (error !== 'cancel') {
       console.error('导出所有用户失败:', error)
-      ElMessage.error('导出失败，请重试！')
+      ArcoMessage.error('导出失败，请重试！')
     }
   }
 }

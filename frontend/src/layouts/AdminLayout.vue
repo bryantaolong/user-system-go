@@ -1,101 +1,97 @@
 <template>
   <div class="admin-layout">
-    <el-container class="layout-container">
-      <el-aside width="240px" class="layout-aside">
+    <a-layout class="layout-container">
+      <a-layout-sider width="240px" class="layout-aside">
         <div class="aside-header">
           <div class="logo">
-            <el-icon :size="24"><Platform /></el-icon>
+            <IconDesktop :size="24" />
             <span class="logo-text">用户管理系统</span>
           </div>
         </div>
 
-        <el-menu
-          router
-          :default-active="activeMenu"
+        <a-menu
+          :selected-keys="[activeMenu]"
+          @menu-item-click="handleMenuClick"
           class="aside-menu"
-          background-color="#304156"
-          text-color="#bfcbd9"
-          active-text-color="#409eff"
         >
-          <el-menu-item index="/">
-            <el-icon><House /></el-icon>
+          <a-menu-item key="/">
+            <template #icon><IconHome /></template>
             <span>返回首页</span>
-          </el-menu-item>
-          <el-menu-item index="/admin/users">
-            <el-icon><User /></el-icon>
+          </a-menu-item>
+          <a-menu-item key="/admin/users">
+            <template #icon><IconUser /></template>
             <span>用户管理</span>
-          </el-menu-item>
-          <el-menu-item index="/admin/profile">
-            <el-icon><Avatar /></el-icon>
+          </a-menu-item>
+          <a-menu-item key="/admin/profile">
+            <template #icon><IconUserGroup /></template>
             <span>个人中心</span>
-          </el-menu-item>
-          <el-menu-item index="/admin/settings">
-            <el-icon><Setting /></el-icon>
+          </a-menu-item>
+          <a-menu-item key="/admin/settings">
+            <template #icon><IconSettings /></template>
             <span>系统设置</span>
-          </el-menu-item>
-        </el-menu>
-      </el-aside>
+          </a-menu-item>
+        </a-menu>
+      </a-layout-sider>
 
-      <el-container class="layout-main">
-        <el-header class="layout-header">
+      <a-layout class="layout-main">
+        <a-layout-header class="layout-header">
           <div class="header-left">
-            <el-breadcrumb separator="/">
-              <el-breadcrumb-item
+            <a-breadcrumb>
+              <a-breadcrumb-item
                 v-for="item in breadcrumbs"
                 :key="item.path"
-                :to="{ path: item.path }"
+                @click="router.push(item.path)"
+                style="cursor: pointer"
               >
                 {{ item.meta?.title }}
-              </el-breadcrumb-item>
-            </el-breadcrumb>
+              </a-breadcrumb-item>
+            </a-breadcrumb>
           </div>
 
           <div class="header-right">
-            <el-dropdown trigger="hover" @command="handleCommand">
+            <a-dropdown trigger="hover" @select="handleCommand">
               <div class="user-info">
-                <el-avatar :size="32" :src="getAvatarUrl(userStore.userProfile?.avatar)">
+                <a-avatar :size="32" :src="getAvatarUrl(userStore.userProfile?.avatar)">
                   {{ userStore.userInfo?.username?.charAt(0).toUpperCase() }}
-                </el-avatar>
+                </a-avatar>
                 <span class="username">{{ userStore.userInfo?.username }}</span>
-                <el-icon class="el-icon--right"><arrow-down /></el-icon>
+                <IconDown />
               </div>
               <template #dropdown>
-                <el-dropdown-menu>
-                  <el-dropdown-item command="profile">
-                    <el-icon><User /></el-icon>
-                    个人中心
-                  </el-dropdown-item>
-                  <el-dropdown-item divided command="logout">
-                    <el-icon><SwitchButton /></el-icon>
-                    退出登录
-                  </el-dropdown-item>
-                </el-dropdown-menu>
+                <a-doption value="profile">
+                  <template #icon><IconUser /></template>
+                  个人中心
+                </a-doption>
+                <a-doption value="logout" :style="{ marginTop: '4px' }">
+                  <template #icon><IconExport /></template>
+                  退出登录
+                </a-doption>
               </template>
-            </el-dropdown>
+            </a-dropdown>
           </div>
-        </el-header>
+        </a-layout-header>
 
-        <el-main class="layout-content">
+        <a-layout-content class="layout-content">
           <router-view />
-        </el-main>
-      </el-container>
-    </el-container>
+        </a-layout-content>
+      </a-layout>
+    </a-layout>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ArcoMessage, ArcoMessageBox } from '@/utils/arco-message'
 import {
-  Platform,
-  User,
-  Avatar,
-  Setting,
-  ArrowDown,
-  SwitchButton,
-  House
-} from '@element-plus/icons-vue'
+  IconDesktop,
+  IconHome,
+  IconUser,
+  IconUserGroup,
+  IconSettings,
+  IconDown,
+  IconExport,
+} from '@arco-design/web-vue/es/icon'
 import { useUserStore } from '@/stores/user'
 import { getAvatarUrl } from '@/utils/file'
 
@@ -106,6 +102,10 @@ const userStore = useUserStore()
 const activeMenu = computed(() => route.path)
 const breadcrumbs = computed(() => route.matched.filter(item => item.meta?.title))
 
+const handleMenuClick = (key: string) => {
+  router.push(key)
+}
+
 const handleCommand = async (command: string) => {
   switch (command) {
     case 'profile':
@@ -113,12 +113,10 @@ const handleCommand = async (command: string) => {
       break
     case 'logout':
       try {
-        await ElMessageBox.confirm('确定要退出登录吗？', '提示', {
-          type: 'warning'
-        })
+        await ArcoMessageBox.confirm('确定要退出登录吗？', '提示')
         await userStore.logout()
         router.push('/login')
-        ElMessage.success('已退出登录')
+        ArcoMessage.success('已退出登录')
       } catch {
         // 取消退出
       }
@@ -138,7 +136,6 @@ const handleCommand = async (command: string) => {
 
 .layout-aside {
   background-color: #304156;
-  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
 }
 
 .aside-header {
@@ -202,7 +199,12 @@ const handleCommand = async (command: string) => {
   background: #fafbfc;
 }
 
-:deep(.el-menu-item.is-active) {
+:deep(.arco-menu-item) {
+  color: #bfcbd9;
+}
+
+:deep(.arco-menu-selected) {
   background-color: #263445 !important;
+  color: #fff;
 }
 </style>

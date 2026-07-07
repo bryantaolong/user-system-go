@@ -1,54 +1,54 @@
 <template>
   <div class="system-log">
-    <el-card class="log-card">
+    <a-card class="log-card">
       <div class="log-header">
         <div class="title-section">
           <h2>系统日志</h2>
           <p class="subtitle">查看后台应用运行日志，仅管理员可访问</p>
         </div>
         <div class="actions">
-          <el-select
+          <a-select
             v-model="selectedFile"
             placeholder="选择日志文件"
             size="small"
             class="file-select"
             @change="loadLogs"
           >
-            <el-option
+            <a-option
               v-for="file in logFiles"
               :key="file"
               :label="file"
               :value="file"
             />
-          </el-select>
+          </a-select>
           <span class="lines-label">行数：</span>
-          <el-input-number
+          <a-input-number
             v-model="lineCount"
             :min="50"
             :max="2000"
             :step="50"
             size="small"
           />
-          <el-button type="primary" :loading="loading" @click="loadLogs">
+          <a-button type="primary" :loading="loading" @click="loadLogs">
             刷新
-          </el-button>
+          </a-button>
         </div>
       </div>
 
-      <el-divider />
+      <a-divider />
 
-      <el-empty v-if="!loading && logs.length === 0" description="暂无日志数据" />
+      <a-empty v-if="!loading && logs.length === 0" description="暂无日志数据" />
 
-      <el-scrollbar v-else class="log-content">
+      <a-scrollbar v-else class="log-content">
         <pre><code>{{ logsText }}</code></pre>
-      </el-scrollbar>
-    </el-card>
+      </a-scrollbar>
+    </a-card>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ArcoMessage } from '@/utils/arco-message'
 import * as logApi from '@/api/system/log'
 
 const loading = ref(false)
@@ -68,11 +68,11 @@ const loadFiles = async () => {
         selectedFile.value = logFiles.value[0]
       }
     } else {
-      ElMessage.error(res.message || '加载日志文件列表失败')
+      ArcoMessage.error(res.message || '加载日志文件列表失败')
     }
   } catch (error) {
     console.error('加载日志文件列表失败:', error)
-    ElMessage.error('加载日志文件列表失败，请稍后重试')
+    ArcoMessage.error('加载日志文件列表失败，请稍后重试')
   }
 }
 
@@ -83,11 +83,11 @@ const loadLogs = async () => {
     if (res.code === 200) {
       logs.value = res.data || []
     } else {
-      ElMessage.error(res.message || '加载日志失败')
+      ArcoMessage.error(res.message || '加载日志失败')
     }
   } catch (error) {
     console.error('加载系统日志失败:', error)
-    ElMessage.error('加载系统日志失败，请稍后重试')
+    ArcoMessage.error('加载系统日志失败，请稍后重试')
   } finally {
     loading.value = false
   }

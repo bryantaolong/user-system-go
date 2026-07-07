@@ -1,10 +1,10 @@
 <template>
-  <el-table :data="history" style="width: 100%">
-    <el-table-column prop="loginTime" label="登录时间" width="180"/>
-    <el-table-column prop="ipAddress" label="IP地址" width="140"/>
-    <el-table-column prop="location" label="登录地点"/>
-    <el-table-column prop="device" label="设备信息"/>
-  </el-table>
+  <a-table :data="history" style="width: 100%" :pagination="false">
+    <a-table-column title="登录时间" data-index="loginTime" :width="180" />
+    <a-table-column title="IP地址" data-index="ipAddress" :width="140" />
+    <a-table-column title="登录地点" data-index="location" />
+    <a-table-column title="设备信息" data-index="device" />
+  </a-table>
 </template>
 
 <script setup lang="ts">
@@ -17,4 +17,3 @@ defineProps<{
   }>
 }>()
 </script>
-

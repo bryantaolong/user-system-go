@@ -1,30 +1,26 @@
 <template>
   <div class="user-profile">
-    <el-card class="profile-header">
+    <a-card class="profile-header">
       <div class="profile-main">
         <div class="profile-avatar">
-          <el-upload
-              class="avatar-uploader"
-              action="#"
+          <a-upload
               :show-file-list="false"
-              :http-request="handleUploadAvatar"
+              :custom-request="handleUploadAvatar"
               :before-upload="beforeAvatarUpload"
           >
-            <el-avatar
+            <a-avatar
                 v-if="userStore.userProfile?.avatar"
                 :size="120"
                 :src="getAvatarUrl(userStore.userProfile.avatar)"
             />
-            <el-avatar v-else :size="120">
+            <a-avatar v-else :size="120">
               {{ userStore.userInfo?.username?.charAt(0).toUpperCase() }}
-            </el-avatar>
+            </a-avatar>
             <div class="avatar-overlay">
-              <el-icon :size="24">
-                <Camera/>
-              </el-icon>
+              <IconCamera :size="24" />
               <p>点击更换</p>
             </div>
-          </el-upload>
+          </a-upload>
         </div>
 
         <div class="profile-info">
@@ -33,15 +29,15 @@
           </div>
         </div>
       </div>
-    </el-card>
+    </a-card>
 
-    <el-card class="main-content-card">
-      <el-tabs v-model="activeMainTab" class="main-tabs">
+    <a-card class="main-content-card">
+      <a-tabs v-model:active-key="activeMainTab" class="main-tabs">
 
-        <el-tab-pane label="设置" name="settings">
+        <a-tab-pane key="settings" title="设置">
           <div class="settings-container">
-            <el-tabs v-model="editActiveTab" tab-position="left" class="settings-tabs">
-              <el-tab-pane label="基本信息" name="basic">
+            <a-tabs v-model:active-key="editActiveTab" tab-position="left" class="settings-tabs">
+              <a-tab-pane key="basic" title="基本信息">
                 <div class="settings-content">
                   <div class="settings-header">
                     <h3>基本信息</h3>
@@ -54,9 +50,9 @@
                     @save="handleUpdateBasic"
                   />
                 </div>
-              </el-tab-pane>
+              </a-tab-pane>
 
-              <el-tab-pane label="账号安全" name="security">
+              <a-tab-pane key="security" title="账号安全">
                 <div class="settings-content">
                   <div class="settings-header">
                     <h3>账号安全</h3>
@@ -69,9 +65,9 @@
                     @delete-account="handleDeleteAccount"
                   />
                 </div>
-              </el-tab-pane>
+              </a-tab-pane>
 
-              <el-tab-pane label="登录历史" name="login-history">
+              <a-tab-pane key="login-history" title="登录历史">
                 <div class="settings-content">
                   <div class="settings-header">
                     <h3>登录历史</h3>
@@ -79,19 +75,19 @@
                   </div>
                   <LoginHistory :history="loginHistory" />
                 </div>
-              </el-tab-pane>
-            </el-tabs>
+              </a-tab-pane>
+            </a-tabs>
           </div>
-        </el-tab-pane>
-      </el-tabs>
-    </el-card>
+        </a-tab-pane>
+      </a-tabs>
+    </a-card>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
-import { Camera } from '@element-plus/icons-vue'
+import { ArcoMessage, ArcoMessageBox } from '@/utils/arco-message'
+import { IconCamera } from '@arco-design/web-vue/es/icon'
 import { useUserStore } from '@/stores/user'
 import * as userApi from '@/api/user/user'
 import * as userProfileApi from '@/api/user/userProfile'
@@ -133,9 +129,9 @@ const handleUpdateBasic = async (formData: any) => {
       await userApi.updateUser(userStore.userInfo.id, {phone: formData.phone, email: formData.email})
     }
     await userStore.fetchUserInfo()
-    ElMessage.success('更新成功')
+    ArcoMessage.success('更新成功')
   } catch (e) {
-    ElMessage.error('更新失败')
+    ArcoMessage.error('更新失败')
   } finally {
     updating.value = false
   }
@@ -146,9 +142,9 @@ const handleChangePassword = async (pwdData: any) => {
   try {
     const res = await userStore.changePassword(pwdData.oldPassword, pwdData.newPassword)
     if (res.success) {
-      ElMessage.success('密码修改成功')
+      ArcoMessage.success('密码修改成功')
       securitySettingsRef.value?.resetPasswordForm()
-    } else ElMessage.error(res.message)
+    } else ArcoMessage.error(res.message)
   } finally {
     changingPassword.value = false
   }
@@ -156,11 +152,15 @@ const handleChangePassword = async (pwdData: any) => {
 
 const handleDeleteAccount = async () => {
   try {
-    await ElMessageBox.confirm('确定注销账号吗？这是不可逆的操作！', '警告', {type: 'error'})
-    const {value} = await ElMessageBox.prompt('请输入 "DELETE" 确认', '二次确认')
+    await ArcoMessageBox.confirm('确定注销账号吗？这是不可逆的操作！', '警告')
+    const { value } = await ArcoMessageBox.prompt('请输入 "DELETE" 确认', '二次确认', {
+      confirmText: '确定',
+      cancelText: '取消',
+      placeholder: '请输入 DELETE'
+    })
     if (value === 'DELETE') {
       const res = await userStore.deleteAccount()
-      if (res.success) ElMessage.success('注销成功')
+      if (res.success) ArcoMessage.success('注销成功')
     }
   } catch (e) {
   }
@@ -170,21 +170,21 @@ const handleUploadAvatar = async (options: any) => {
   try {
     const res = await userProfileApi.uploadAvatar(options.file)
     if (res.code === 200) {
-      ElMessage.success('头像上传成功')
+      ArcoMessage.success('头像上传成功')
       if (userStore.userProfile) {
         userStore.userProfile.avatar = res.data
       }
     } else {
-      ElMessage.error(res.message || '上传失败')
+      ArcoMessage.error(res.message || '上传失败')
     }
   } catch (e: any) {
-    ElMessage.error(e.message || '上传失败')
+    ArcoMessage.error(e.message || '上传失败')
   }
 }
 
 const beforeAvatarUpload = (file: File) => {
   const isLt2M = file.size / 1024 / 1024 < 2
-  if (!isLt2M) ElMessage.error('大小不能超过 2MB!')
+  if (!isLt2M) ArcoMessage.error('大小不能超过 2MB!')
   return isLt2M
 }
 
@@ -254,7 +254,7 @@ onMounted(() => {
   padding: 20px;
 }
 
-.avatar-uploader {
+.profile-avatar {
   position: relative;
   cursor: pointer;
 }
@@ -276,7 +276,7 @@ onMounted(() => {
   transition: 0.3s;
 }
 
-.avatar-uploader:hover .avatar-overlay {
+.profile-avatar:hover .avatar-overlay {
   opacity: 1;
 }
 
@@ -318,11 +318,6 @@ onMounted(() => {
   padding: 0 10px;
 }
 
-:deep(.el-tabs__item) {
-  font-size: 16px;
-  height: 55px;
-}
-
 .settings-container {
   min-height: 400px;
   padding: 20px 0;
@@ -332,13 +327,13 @@ onMounted(() => {
   height: 100%;
 }
 
-:deep(.settings-tabs .el-tabs__header.is-left) {
+:deep(.arco-tabs-tab-left) {
   margin-right: 30px;
   width: 160px;
-  border-right: 1px solid var(--el-border-color-light);
+  border-right: 1px solid var(--color-border-2);
 }
 
-:deep(.settings-tabs .el-tabs__item.is-left) {
+:deep(.arco-tabs-tab-title) {
   text-align: left;
   height: 45px;
   line-height: 45px;
@@ -353,19 +348,19 @@ onMounted(() => {
 .settings-header {
   margin-bottom: 25px;
   padding-bottom: 15px;
-  border-bottom: 1px solid var(--el-border-color-lighter);
+  border-bottom: 1px solid var(--color-border-2);
 }
 
 .settings-header h3 {
   margin: 0 0 8px 0;
   font-size: 18px;
   font-weight: 600;
-  color: var(--el-text-color-primary);
+  color: var(--color-text-1);
 }
 
 .settings-header p {
   margin: 0;
   font-size: 14px;
-  color: var(--el-text-color-secondary);
+  color: var(--color-text-3);
 }
 </style>

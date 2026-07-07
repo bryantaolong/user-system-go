@@ -6,80 +6,78 @@
         <div class="register-subtitle">创建您的账户</div>
       </div>
 
-      <el-form
+      <a-form
         ref="formRef"
         :model="registerForm"
         :rules="registerRules"
         class="register-form"
         size="large"
+        @submit="handleRegister"
       >
-        <el-form-item prop="username">
-          <el-input
+        <a-form-item field="username">
+          <a-input
             v-model="registerForm.username"
             placeholder="请输入用户名"
-            :prefix-icon="User"
-            clearable
-          />
-        </el-form-item>
+            allow-clear
+          >
+            <template #add-before><IconUser /></template>
+          </a-input>
+        </a-form-item>
 
-        <el-form-item prop="password">
-          <el-input
+        <a-form-item field="password">
+          <a-input-password
             v-model="registerForm.password"
-            type="password"
             placeholder="请输入密码"
-            :prefix-icon="Lock"
-            show-password
-            clearable
+            allow-clear
           />
-        </el-form-item>
+        </a-form-item>
 
-        <el-form-item prop="confirmPassword">
-          <el-input
+        <a-form-item field="confirmPassword">
+          <a-input-password
             v-model="registerForm.confirmPassword"
-            type="password"
             placeholder="请确认密码"
-            :prefix-icon="Lock"
-            show-password
-            clearable
+            allow-clear
           />
-        </el-form-item>
+        </a-form-item>
 
-        <el-form-item prop="phone">
-          <el-input
+        <a-form-item field="phone">
+          <a-input
             v-model="registerForm.phone"
             placeholder="请输入手机号码（可选）"
-            :prefix-icon="Phone"
-            clearable
-          />
-        </el-form-item>
+            allow-clear
+          >
+            <template #add-before><IconPhone /></template>
+          </a-input>
+        </a-form-item>
 
-        <el-form-item prop="email">
-          <el-input
+        <a-form-item field="email">
+          <a-input
             v-model="registerForm.email"
             placeholder="请输入邮箱地址（可选）"
-            :prefix-icon="Message"
-            clearable
-          />
-        </el-form-item>
+            allow-clear
+          >
+            <template #add-before><IconMessage /></template>
+          </a-input>
+        </a-form-item>
 
-        <el-form-item>
-          <el-button
+        <a-form-item>
+          <a-button
             type="primary"
             size="large"
             :loading="loading"
             class="register-button"
-            @click="handleRegister"
+            html-type="submit"
           >
             注册
-          </el-button>
-        </el-form-item>
-      </el-form>
+          </a-button>
+        </a-form-item>
+      </a-form>
 
       <div class="register-footer">
         <span>已有账号？</span>
-        <el-link type="primary" :underline="false" @click="$router.push('/login')">
+        <a-link type="primary" :underline="false" @click="router.push('/login')">
           立即登录
-        </el-link>
+        </a-link>
       </div>
     </div>
 
@@ -94,8 +92,8 @@
 <script setup lang="ts">
 import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
-import { ElMessage } from 'element-plus'
-import { User, Lock, Phone, Message } from '@element-plus/icons-vue'
+import { ArcoMessage } from '@/utils/arco-message'
+import { IconUser, IconLock, IconPhone, IconMessage } from '@arco-design/web-vue/es/icon'
 import { useUserStore } from '@/stores/user'
 
 const router = useRouter()
@@ -111,9 +109,9 @@ const registerForm = reactive({
   email: ''
 })
 
-const validateConfirmPassword = (rule: any, value: string, callback: Function) => {
+const validateConfirmPassword = (value: string, callback: (error?: string) => void) => {
   if (value !== registerForm.password) {
-    callback(new Error('两次输入的密码不一致'))
+    callback('两次输入的密码不一致')
   } else {
     callback()
   }
@@ -122,11 +120,11 @@ const validateConfirmPassword = (rule: any, value: string, callback: Function) =
 const registerRules = {
   username: [
     { required: true, message: '请输入用户名', trigger: 'blur' },
-    { min: 2, max: 20, message: '用户名长度应在2-20个字符之间', trigger: 'blur' }
+    { minLength: 2, maxLength: 20, message: '用户名长度应在2-20个字符之间', trigger: 'blur' }
   ],
   password: [
     { required: true, message: '请输入密码', trigger: 'blur' },
-    { min: 6, message: '密码至少6位', trigger: 'blur' }
+    { minLength: 6, message: '密码至少6位', trigger: 'blur' }
   ],
   confirmPassword: [
     { required: true, message: '请确认密码', trigger: 'blur' },
@@ -134,7 +132,7 @@ const registerRules = {
   ],
   phone: [
     {
-      pattern: /^1[3-9]\d{9}$/,
+      match: /^1[3-9]\d{9}$/,
       message: '电话号码格式不正确',
       trigger: 'blur'
     }
@@ -151,33 +149,32 @@ const registerRules = {
 const handleRegister = async () => {
   if (!formRef.value) return
 
-  await formRef.value.validate(async (valid: boolean) => {
+  try {
+    const valid = await formRef.value.validate()
     if (!valid) return
 
     loading.value = true
-    try {
-      const result = await userStore.register({
-        username: registerForm.username,
-        password: registerForm.password,
-        phone: registerForm.phone || undefined,
-        email: registerForm.email || undefined
-      })
+    const result = await userStore.register({
+      username: registerForm.username,
+      password: registerForm.password,
+      phone: registerForm.phone || undefined,
+      email: registerForm.email || undefined
+    })
 
-      if (result.success) {
-        ElMessage.success('注册成功！正在跳转到登录页面...')
-        setTimeout(() => {
-          router.push('/login')
-        }, 1500)
-      } else {
-        ElMessage.error(result.message || '注册失败')
-      }
-    } catch (error) {
-      ElMessage.error('注册失败，请稍后重试')
-      console.error('Register error:', error)
-    } finally {
-      loading.value = false
+    if (result.success) {
+      ArcoMessage.success('注册成功！正在跳转到登录页面...')
+      setTimeout(() => {
+        router.push('/login')
+      }, 1500)
+    } else {
+      ArcoMessage.error(result.message || '注册失败')
     }
-  })
+  } catch (error) {
+    ArcoMessage.error('注册失败，请稍后重试')
+    console.error('Register error:', error)
+  } finally {
+    loading.value = false
+  }
 }
 </script>
 
@@ -300,33 +297,30 @@ const handleRegister = async () => {
   border-top: 1px solid #e4e7ed;
 }
 
-:deep(.el-input__wrapper) {
+:deep(.arco-input) {
   border-radius: 8px;
-  box-shadow: none;
-  border: 1px solid #dcdfe6;
-  transition: all 0.3s;
 }
 
-:deep(.el-input__wrapper:hover) {
+:deep(.arco-input:hover) {
   border-color: #f5576c;
 }
 
-:deep(.el-input__wrapper.is-focus) {
+:deep(.arco-input-focused) {
   border-color: #f5576c;
   box-shadow: 0 0 0 2px rgba(245, 87, 108, 0.1);
 }
 
-:deep(.el-form-item.is-error .el-input__wrapper) {
-  border-color: #f56c6c;
+:deep(.arco-form-item-message) {
+  color: #f56c6c;
 }
 
-:deep(.el-button--primary) {
+:deep(.arco-button-primary) {
   background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
   border: none;
   transition: all 0.3s;
 }
 
-:deep(.el-button--primary:hover) {
+:deep(.arco-button-primary:hover) {
   transform: translateY(-2px);
   box-shadow: 0 5px 15px rgba(245, 87, 108, 0.4);
 }

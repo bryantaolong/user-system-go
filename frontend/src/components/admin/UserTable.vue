@@ -1,98 +1,102 @@
 <template>
-  <el-card class="table-card">
-    <el-table
-      v-loading="loading"
+  <a-card class="table-card">
+    <a-table
       :data="userList"
+      :loading="loading"
       border
       stripe
       class="user-table"
+      :pagination="false"
     >
-      <el-table-column prop="id" label="ID" width="80" align="center" />
-      <el-table-column prop="username" label="用户名" min-width="120" show-overflow-tooltip />
-      <el-table-column prop="phone" label="手机号" width="140" />
-      <el-table-column prop="email" label="邮箱" min-width="180" show-overflow-tooltip />
-      <el-table-column prop="roles" label="角色" width="140">
-        <template #default="{ row }">
-          <el-tag v-if="row.roles.includes('ROLE_ADMIN')" type="danger">管理员</el-tag>
-          <el-tag v-else type="info">普通用户</el-tag>
+      <a-table-column title="ID" data-index="id" :width="80" align="center" />
+      <a-table-column title="用户名" data-index="username" :width="120" ellipsis tooltip />
+      <a-table-column title="手机号" data-index="phone" :width="140" />
+      <a-table-column title="邮箱" data-index="email" ellipsis tooltip />
+      <a-table-column title="角色" data-index="roles" :width="140">
+        <template #cell="{ record }">
+          <a-tag v-if="record.roles.includes('ROLE_ADMIN')" color="red">管理员</a-tag>
+          <a-tag v-else color="gray">普通用户</a-tag>
         </template>
-      </el-table-column>
-      <el-table-column prop="status" label="状态" width="100" align="center">
-        <template #default="{ row }">
-          <el-tag v-if="row.status === 'NORMAL'" type="success">正常</el-tag>
-          <el-tag v-else-if="row.status === 'LOCKED'" type="warning">锁定</el-tag>
-          <el-tag v-else type="danger">封禁</el-tag>
+      </a-table-column>
+      <a-table-column title="状态" data-index="status" :width="100" align="center">
+        <template #cell="{ record }">
+          <a-tag v-if="record.status === 'NORMAL'" color="green">正常</a-tag>
+          <a-tag v-else-if="record.status === 'LOCKED'" color="orange">锁定</a-tag>
+          <a-tag v-else color="red">封禁</a-tag>
         </template>
-      </el-table-column>
-      <el-table-column prop="lastLoginAt" label="最后登录时间" width="180">
-        <template #default="{ row }">
-          {{ formatDateTime(row.lastLoginAt) }}
+      </a-table-column>
+      <a-table-column title="最后登录时间" data-index="lastLoginAt" :width="180">
+        <template #cell="{ record }">
+          {{ formatDateTime(record.lastLoginAt) }}
         </template>
-      </el-table-column>
-      <el-table-column label="操作" width="220" fixed="right">
-        <template #default="{ row }">
-          <el-button-group>
-            <el-button
+      </a-table-column>
+      <a-table-column title="操作" :width="220" fixed="right">
+        <template #cell="{ record }">
+          <a-button-group>
+            <a-button
               size="small"
               type="primary"
-              :icon="Edit"
-              @click="handleEdit(row)"
+              @click="handleEdit(record)"
             >
+              <template #icon><IconEdit /></template>
               编辑
-            </el-button>
-            <el-dropdown @command="(cmd: string) => handleCommand(cmd, row)">
-              <el-button size="small" type="info">
-                更多<el-icon class="el-icon--right"><arrow-down /></el-icon>
-              </el-button>
+            </a-button>
+            <a-dropdown @select="(cmd: string) => handleCommand(cmd, record)">
+              <a-button size="small" type="secondary">
+                更多<template #icon><IconDown /></template>
+              </a-button>
               <template #dropdown>
-                <el-dropdown-menu>
-                  <el-dropdown-item command="view" :icon="View">
-                    查看详情
-                  </el-dropdown-item>
-                  <el-dropdown-item command="resetPwd" :icon="Key">
-                    重置密码
-                  </el-dropdown-item>
-                  <el-dropdown-item v-if="row.status !== 'BANNED'" command="block" :icon="Lock">
-                    封禁用户
-                  </el-dropdown-item>
-                  <el-dropdown-item v-else command="unblock" :icon="Unlock">
-                    解封用户
-                  </el-dropdown-item>
-                  <el-dropdown-item command="delete" :icon="Delete" divided>
-                    删除用户
-                  </el-dropdown-item>
-                </el-dropdown-menu>
+                <a-doption value="view">
+                  <template #icon><IconEye /></template>
+                  查看详情
+                </a-doption>
+                <a-doption value="resetPwd">
+                  <template #icon><IconSafe /></template>
+                  重置密码
+                </a-doption>
+                <a-doption v-if="record.status !== 'BANNED'" value="block">
+                  <template #icon><IconLock /></template>
+                  封禁用户
+                </a-doption>
+                <a-doption v-else value="unblock">
+                  <template #icon><IconUnlock /></template>
+                  解封用户
+                </a-doption>
+                <a-doption value="delete" :style="{ marginTop: '4px' }">
+                  <template #icon><IconDelete /></template>
+                  删除用户
+                </a-doption>
               </template>
-            </el-dropdown>
-          </el-button-group>
+            </a-dropdown>
+          </a-button-group>
         </template>
-      </el-table-column>
-    </el-table>
+      </a-table-column>
+    </a-table>
 
-    <el-pagination
-      v-model:current-page="pageNum"
-      v-model:page-size="pageSize"
+    <a-pagination
+      :current="pageNum"
+      :page-size="pageSize"
       :total="total"
-      :page-sizes="[10, 20, 50, 100]"
-      layout="total, sizes, prev, pager, next, jumper"
+      :page-size-options="[10, 20, 50, 100]"
+      show-total
+      show-jumper
       class="pagination"
-      @size-change="handleSizeChange"
-      @current-change="handleCurrentChange"
+      @change="handlePageChange"
     />
-  </el-card>
+  </a-card>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
 import {
-  Edit,
-  View,
-  Key,
-  Lock,
-  Unlock,
-  Delete,
-  ArrowDown
-} from '@element-plus/icons-vue'
+  IconEdit,
+  IconEye,
+  IconSafe,
+  IconLock,
+  IconUnlock,
+  IconDelete,
+  IconDown
+} from '@arco-design/web-vue/es/icon'
 import type { SysUser } from '@/models/entity'
 
 const props = defineProps<{
@@ -154,12 +158,13 @@ const handleCommand = (command: string, user: SysUser) => {
   }
 }
 
-const handleSizeChange = (val: number) => {
-  emit('sizeChange', val)
-}
-
-const handleCurrentChange = (val: number) => {
-  emit('currentChange', val)
+const handlePageChange = (current: number, pageSize: number) => {
+  if (current !== pageNum.value) {
+    emit('currentChange', current)
+  }
+  if (pageSize !== props.pageSize) {
+    emit('sizeChange', pageSize)
+  }
 }
 </script>
 
@@ -178,12 +183,11 @@ const handleCurrentChange = (val: number) => {
   margin-top: 20px;
 }
 
-:deep(.el-tag) {
+:deep(.arco-tag) {
   font-weight: 500;
 }
 
-:deep(.el-button-group) {
+:deep(.arco-button-group) {
   display: inline-flex;
 }
 </style>
-

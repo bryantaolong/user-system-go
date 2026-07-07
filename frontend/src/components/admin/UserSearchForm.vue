@@ -1,58 +1,60 @@
 <template>
-  <el-card class="search-card">
-    <el-form :model="searchForm" inline class="search-form">
-      <el-form-item label="用户名">
-        <el-input
+  <a-card class="search-card">
+    <a-form :model="searchForm" layout="inline" class="search-form">
+      <a-form-item label="用户名">
+        <a-input
             v-model="searchForm.username"
             placeholder="请输入用户名"
-            clearable
+            allow-clear
         />
-      </el-form-item>
+      </a-form-item>
 
-      <el-form-item label="手机号">
-        <el-input
+      <a-form-item label="手机号">
+        <a-input
             v-model="searchForm.phone"
             placeholder="请输入手机号"
-            clearable
+            allow-clear
         />
-      </el-form-item>
+      </a-form-item>
 
-      <el-form-item label="邮箱">
-        <el-input
+      <a-form-item label="邮箱">
+        <a-input
             v-model="searchForm.email"
             placeholder="请输入邮箱"
-            clearable
+            allow-clear
         />
-      </el-form-item>
+      </a-form-item>
 
-      <el-form-item label="状态">
-        <el-select
+      <a-form-item label="状态">
+        <a-select
             v-model="searchForm.status"
             placeholder="请选择状态"
-            clearable
+            allow-clear
             style="width: 120px"
         >
-          <el-option label="正常" value="NORMAL" />
-          <el-option label="锁定" value="LOCKED" />
-          <el-option label="封禁" value="BANNED" />
-        </el-select>
-      </el-form-item>
+          <a-option label="正常" value="NORMAL" />
+          <a-option label="锁定" value="LOCKED" />
+          <a-option label="封禁" value="BANNED" />
+        </a-select>
+      </a-form-item>
 
-      <el-form-item>
-        <el-button type="primary" :icon="Search" @click="handleSearch">
+      <a-form-item>
+        <a-button type="primary" @click="handleSearch">
+          <template #icon><IconSearch /></template>
           查询
-        </el-button>
-        <el-button :icon="Refresh" @click="handleReset">
+        </a-button>
+        <a-button @click="handleReset">
+          <template #icon><IconRefresh /></template>
           重置
-        </el-button>
-      </el-form-item>
-    </el-form>
-  </el-card>
+        </a-button>
+      </a-form-item>
+    </a-form>
+  </a-card>
 </template>
 
 <script setup lang="ts">
 import { reactive } from 'vue'
-import { Search, Refresh } from '@element-plus/icons-vue'
+import { IconSearch, IconRefresh } from '@arco-design/web-vue/es/icon'
 
 // 状态类型定义
 export type UserStatus = 'NORMAL' | 'LOCKED' | 'BANNED' | ''
@@ -105,7 +107,7 @@ defineExpose({
   margin-bottom: -18px;
 }
 
-.search-form :deep(.el-form-item) {
+.search-form :deep(.arco-form-item) {
   margin-right: 20px;
 }
 </style>

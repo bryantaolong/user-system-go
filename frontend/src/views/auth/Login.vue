@@ -6,59 +6,57 @@
         <div class="login-subtitle">请输入您的账户信息</div>
       </div>
 
-      <el-form
-          ref="formRef"
-          :model="loginForm"
-          :rules="loginRules"
-          class="login-form"
-          size="large"
+      <a-form
+        ref="formRef"
+        :model="loginForm"
+        :rules="loginRules"
+        class="login-form"
+        size="large"
+        @submit="handleLogin"
       >
-        <el-form-item prop="username">
-          <el-input
-              v-model="loginForm.username"
-              placeholder="请输入用户名"
-              :prefix-icon="User"
-              clearable
-          />
-        </el-form-item>
+        <a-form-item field="username">
+          <a-input
+            v-model="loginForm.username"
+            placeholder="请输入用户名"
+            allow-clear
+          >
+            <template #add-before><IconUser /></template>
+          </a-input>
+        </a-form-item>
 
-        <el-form-item prop="password">
-          <el-input
-              v-model="loginForm.password"
-              type="password"
-              placeholder="请输入密码"
-              :prefix-icon="Lock"
-              show-password
-              clearable
-              @keyup.enter="handleLogin"
+        <a-form-item field="password">
+          <a-input-password
+            v-model="loginForm.password"
+            placeholder="请输入密码"
+            allow-clear
           />
-        </el-form-item>
+        </a-form-item>
 
-        <el-form-item>
-          <el-checkbox v-model="rememberMe">记住我</el-checkbox>
-          <el-link type="primary" :underline="false" class="forgot-link">
+        <a-form-item>
+          <a-checkbox v-model="rememberMe">记住我</a-checkbox>
+          <a-link type="primary" :underline="false" class="forgot-link">
             忘记密码？
-          </el-link>
-        </el-form-item>
+          </a-link>
+        </a-form-item>
 
-        <el-form-item>
-          <el-button
-              type="primary"
-              size="large"
-              :loading="loading"
-              class="login-button"
-              @click="handleLogin"
+        <a-form-item>
+          <a-button
+            type="primary"
+            size="large"
+            :loading="loading"
+            class="login-button"
+            html-type="submit"
           >
             登录
-          </el-button>
-        </el-form-item>
-      </el-form>
+          </a-button>
+        </a-form-item>
+      </a-form>
 
       <div class="login-footer">
         <span>还没有账号？</span>
-        <el-link type="primary" :underline="false" @click="$router.push('/register')">
+        <a-link type="primary" :underline="false" @click="router.push('/register')">
           立即注册
-        </el-link>
+        </a-link>
       </div>
     </div>
 
@@ -73,8 +71,8 @@
 <script setup lang="ts">
 import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
-import { ElMessage } from 'element-plus'
-import { User, Lock } from '@element-plus/icons-vue'
+import { ArcoMessage } from '@/utils/arco-message'
+import { IconUser, IconLock } from '@arco-design/web-vue/es/icon'
 import { useUserStore } from '@/stores/user'
 
 const router = useRouter()
@@ -91,37 +89,36 @@ const loginForm = reactive({
 const loginRules = {
   username: [
     { required: true, message: '请输入用户名', trigger: 'blur' },
-    { min: 2, max: 20, message: '用户名长度应在2-20个字符之间', trigger: 'blur' }
+    { minLength: 2, maxLength: 20, message: '用户名长度应在2-20个字符之间', trigger: 'blur' }
   ],
   password: [
     { required: true, message: '请输入密码', trigger: 'blur' },
-    { min: 6, message: '密码至少6位', trigger: 'blur' }
+    { minLength: 6, message: '密码至少6位', trigger: 'blur' }
   ]
 }
 
 const handleLogin = async () => {
   if (!formRef.value) return
 
-  await formRef.value.validate(async (valid: boolean) => {
+  try {
+    const valid = await formRef.value.validate()
     if (!valid) return
 
     loading.value = true
-    try {
-      const result = await userStore.login(loginForm.username, loginForm.password)
+    const result = await userStore.login(loginForm.username, loginForm.password)
 
-      if (result.success) {
-        ElMessage.success('登录成功！')
-        router.push('/')
-      } else {
-        ElMessage.error(result.message || '登录失败')
-      }
-    } catch (error) {
-      ElMessage.error('登录失败，请稍后重试')
-      console.error('Login error:', error)
-    } finally {
-      loading.value = false
+    if (result.success) {
+      ArcoMessage.success('登录成功！')
+      router.push('/')
+    } else {
+      ArcoMessage.error(result.message || '登录失败')
     }
-  })
+  } catch (error) {
+    ArcoMessage.error('登录失败，请稍后重试')
+    console.error('Login error:', error)
+  } finally {
+    loading.value = false
+  }
 }
 </script>
 
@@ -268,41 +265,32 @@ const handleLogin = async () => {
   border-top: 1px solid #e4e7ed;
 }
 
-:deep(.el-input__wrapper) {
+:deep(.arco-input) {
   border-radius: 8px;
-  box-shadow: none;
-  border: 1px solid #dcdfe6;
-  transition: all 0.3s;
 }
 
-:deep(.el-input__wrapper:hover) {
+:deep(.arco-input:hover) {
   border-color: #76b900;
 }
 
-:deep(.el-input__wrapper.is-focus) {
+:deep(.arco-input-focused) {
   border-color: #76b900;
   box-shadow: 0 0 0 2px rgba(118, 185, 0, 0.1);
 }
 
-:deep(.el-form-item.is-error .el-input__wrapper) {
-  border-color: #f56c6c;
+:deep(.arco-form-item-message) {
+  color: #f56c6c;
 }
 
-:deep(.el-checkbox__input.is-checked .el-checkbox__inner) {
-  background-color: #76b900;
-  border-color: #76b900;
-}
-
-:deep(.el-link--primary) {
+:deep(.arco-checkbox-checked .arco-checkbox-icon svg) {
   color: #76b900;
 }
 
-:deep(.el-link--primary:hover) {
+:deep(.arco-link) {
+  color: #76b900;
+}
+
+:deep(.arco-link:hover) {
   color: #5b8c00;
-}
-
-/* 输入框图标颜色 */
-:deep(.el-input__prefix) {
-  color: #76b900;
 }
 </style>

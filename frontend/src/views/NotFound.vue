@@ -2,7 +2,7 @@
   <div class="not-found-container">
     <h1>404</h1>
     <p>抱歉，您访问的页面不存在。</p>
-    <el-button type="primary" @click="goHome">返回首页</el-button>
+    <a-button type="primary" @click="goHome">返回首页</a-button>
   </div>
 </template>
 
@@ -22,7 +22,7 @@ const goHome = () => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: 80vh; /* 让内容垂直居中 */
+  min-height: 80vh;
   text-align: center;
   font-family: 'Arial', sans-serif;
   color: #333;
@@ -31,7 +31,7 @@ const goHome = () => {
 .not-found-container h1 {
   font-size: 10em;
   margin-bottom: 0.1em;
-  color: #409EFF; /* Element Plus primary color */
+  color: #165DFF;
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
 }
 
