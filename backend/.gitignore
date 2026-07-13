@@ -1,1 +1,5 @@
 *.exe
+user-system
+user-system.exe
+*.test
+*.out
