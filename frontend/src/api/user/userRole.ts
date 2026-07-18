@@ -1,6 +1,6 @@
 import request from '@/utils/request'
-import type { Result } from '@/models/response'
-import type { UserRoleOptionVO } from '@/models/vo'
+import type { Result } from '@shared/models/response'
+import type { UserRoleOptionVO } from '@shared/models/vo'
 
 /**
  * 用户角色管理API

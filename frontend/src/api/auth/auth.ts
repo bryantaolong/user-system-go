@@ -1,9 +1,9 @@
 import request from '@/utils/request'
-import type {Result} from '@/models/response'
-import type {UserVO} from '@/models/vo'
-import type {LoginRequest} from '@/models/request/auth'
-import type {RegisterRequest} from '@/models/request/auth'
-import type {ChangePasswordRequest} from '@/models/request/user'
+import type {Result} from '@shared/models/response'
+import type {UserVO} from '@shared/models/vo'
+import type {LoginRequest} from '@shared/models/request/auth'
+import type {RegisterRequest} from '@shared/models/request/auth'
+import type {ChangePasswordRequest} from '@shared/models/request/user'
 
 /**
  * 用户认证API

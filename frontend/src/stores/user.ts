@@ -1,180 +1,163 @@
-import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
-import type { UserVO } from '@/models/vo'
-import type { UserProfileVO } from '@/models/vo'
-import * as authApi  from '@/api/auth/auth'
+import { create } from 'zustand'
+import { persist } from 'zustand/middleware'
+import * as authApi from '@/api/auth/auth'
 import * as userProfileApi from '@/api/user/userProfile'
+import type { UserVO } from '@shared/models/vo'
+import type { UserProfileVO } from '@shared/models/vo'
 
-export const useUserStore = defineStore('user', () => {
-  const token = ref<string>(localStorage.getItem('token') || '')
-  const userInfo = ref<UserVO | null>(null)
-  const userProfile = ref<UserProfileVO | null>(null)
+interface UserInfo extends UserVO {}
 
-  const isAuthenticated = computed(() => !!token.value)
-  const isAdmin = computed(() => {
-    return userInfo.value?.roles.includes('ROLE_ADMIN') || false
-  })
+interface UserProfile extends UserProfileVO {}
 
-  /**
-   * 设置Token
-   */
-  const setToken = (newToken: string) => {
-    token.value = newToken
-    localStorage.setItem('token', newToken)
-  }
+interface UserState {
+  token: string
+  userInfo: UserInfo | null
+  userProfile: UserProfile | null
+  isAuthenticated: boolean
+  isAdmin: boolean
+  setToken: (newToken: string) => void
+  clearToken: () => void
+  login: (username: string, password: string) => Promise<{ success: boolean; message?: string }>
+  register: (data: { username: string; password: string; phone?: string; email?: string }) => Promise<{ success: boolean; message?: string }>
+  fetchUserInfo: () => Promise<{ success: boolean; message?: string }>
+  logout: () => Promise<void>
+  changePassword: (oldPassword: string, newPassword: string) => Promise<{ success: boolean; message?: string }>
+  updateProfile: (data: any) => Promise<{ success: boolean; message?: string }>
+  deleteAccount: () => Promise<{ success: boolean; message?: string }>
+}
 
-  /**
-   * 清除Token
-   */
-  const clearToken = () => {
-    token.value = ''
-    localStorage.removeItem('token')
-  }
+export const useUserStore = create<UserState>()(
+  persist(
+    (set, get) => ({
+      token: typeof localStorage !== 'undefined' ? localStorage.getItem('token') || '' : '',
+      userInfo: null,
+      userProfile: null,
 
-  /**
-   * 登录
-   */
-  const login = async (username: string, password: string) => {
-    try {
-      const res = await authApi.login({ username, password })
-      if (res.code === 200 && res.data) {
-        setToken(res.data)
-        await fetchUserInfo()
-        return { success: true }
-      }
-      return { success: false, message: res.message }
-    } catch (error: any) {
-      return { success: false, message: error.message || '登录失败' }
-    }
-  }
+      get isAuthenticated() {
+        return !!get().token
+      },
+      get isAdmin() {
+        return get().userInfo?.roles.includes('ROLE_ADMIN') || false
+      },
 
-  /**
-   * 注册
-   */
-  const register = async (data: { username: string; password: string; phone?: string; email?: string }) => {
-    try {
-      const res = await authApi.register(data)
-      if (res.code === 200 && res.data) {
-        userInfo.value = res.data
-        return { success: true }
-      }
-      return { success: false, message: res.message }
-    } catch (error: any) {
-      return { success: false, message: error.message || '注册失败' }
-    }
-  }
-
-  /**
-   * 获取用户信息
-   * 注意：两个 API 独立调用，即使 profile 获取失败也认为登录有效
-   */
-  const fetchUserInfo = async () => {
-    try {
-      const userRes = await authApi.getCurrentUser()
-
-      if (userRes.code !== 200) {
-        return { success: false, message: '获取用户信息失败' }
-      }
-
-      userInfo.value = userRes.data
-
-      // UserProfile 独立获取，失败不影响登录状态
-      try {
-        const profileRes = await userProfileApi.getCurrentUserProfile()
-        if (profileRes.code === 200) {
-          userProfile.value = profileRes.data
+      setToken: (newToken: string) => {
+        set({ token: newToken })
+        if (typeof localStorage !== 'undefined') {
+          localStorage.setItem('token', newToken)
         }
-      } catch (profileError) {
-        console.warn('获取用户资料失败，可能用户资料尚未创建:', profileError)
-      }
+      },
 
-      return { success: true }
-    } catch (error: any) {
-      return { success: false, message: error.message || '获取用户信息失败' }
+      clearToken: () => {
+        set({ token: '' })
+        if (typeof localStorage !== 'undefined') {
+          localStorage.removeItem('token')
+        }
+      },
+
+      login: async (username: string, password: string) => {
+        try {
+          const res = await authApi.login({ username, password })
+          if (res.code === 200 && res.data) {
+            get().setToken(res.data)
+            await get().fetchUserInfo()
+            return { success: true }
+          }
+          return { success: false, message: res.message }
+        } catch (error: any) {
+          return { success: false, message: error.message || '登录失败' }
+        }
+      },
+
+      register: async (data: { username: string; password: string; phone?: string; email?: string }) => {
+        try {
+          const res = await authApi.register(data)
+          if (res.code === 200 && res.data) {
+            set({ userInfo: res.data })
+            return { success: true }
+          }
+          return { success: false, message: res.message }
+        } catch (error: any) {
+          return { success: false, message: error.message || '注册失败' }
+        }
+      },
+
+      fetchUserInfo: async () => {
+        try {
+          const userRes = await authApi.getCurrentUser()
+          if (userRes.code !== 200) {
+            return { success: false, message: '获取用户信息失败' }
+          }
+
+          set({ userInfo: userRes.data })
+
+          // UserProfile 独立获取，失败不影响登录状态
+          try {
+            const profileRes = await userProfileApi.getCurrentUserProfile()
+            if (profileRes.code === 200) {
+              set({ userProfile: profileRes.data })
+            }
+          } catch (profileError) {
+            console.warn('获取用户资料失败，可能用户资料尚未创建:', profileError)
+          }
+
+          return { success: true }
+        } catch (error: any) {
+          return { success: false, message: error.message || '获取用户信息失败' }
+        }
+      },
+
+      logout: async () => {
+        try {
+          await authApi.logout()
+        } catch (error) {
+          console.error('Logout error:', error)
+        } finally {
+          get().clearToken()
+          set({ userInfo: null, userProfile: null })
+        }
+      },
+
+      changePassword: async (oldPassword: string, newPassword: string) => {
+        try {
+          const res = await authApi.changePassword({ oldPassword, newPassword })
+          if (res.code === 200) {
+            return { success: true }
+          }
+          return { success: false, message: res.message }
+        } catch (error: any) {
+          return { success: false, message: error.message || '修改密码失败' }
+        }
+      },
+
+      updateProfile: async (data: any) => {
+        try {
+          const res = await userProfileApi.updateUserProfile(data)
+          if (res.code === 200) {
+            set({ userProfile: res.data })
+            return { success: true }
+          }
+          return { success: false, message: res.message }
+        } catch (error: any) {
+          return { success: false, message: error.message || '更新资料失败' }
+        }
+      },
+
+      deleteAccount: async () => {
+        try {
+          const res = await authApi.deleteAccount()
+          if (res.code === 200) {
+            await get().logout()
+            return { success: true }
+          }
+          return { success: false, message: res.message }
+        } catch (error: any) {
+          return { success: false, message: error.message || '注销账号失败' }
+        }
+      },
+    }),
+    {
+      name: 'user-store',
+      partialize: (state) => ({ token: state.token }),
     }
-  }
-
-  /**
-   * 退出登录
-   */
-  const logout = async () => {
-    try {
-      await authApi.logout()
-    } catch (error) {
-      console.error('Logout error:', error)
-    } finally {
-      clearToken()
-      userInfo.value = null
-      userProfile.value = null
-    }
-  }
-
-  /**
-   * 修改密码
-   */
-  const changePassword = async (oldPassword: string, newPassword: string) => {
-    try {
-      const res = await authApi.changePassword({ oldPassword, newPassword })
-      if (res.code === 200) {
-        return { success: true }
-      }
-      return { success: false, message: res.message }
-    } catch (error: any) {
-      return { success: false, message: error.message || '修改密码失败' }
-    }
-  }
-
-  /**
-   * 更新用户资料
-   */
-  const updateProfile = async (data: any) => {
-    try {
-      const res = await userProfileApi.updateUserProfile(data)
-      if (res.code === 200) {
-        userProfile.value = res.data
-        return { success: true }
-      }
-      return { success: false, message: res.message }
-    } catch (error: any) {
-      return { success: false, message: error.message || '更新资料失败' }
-    }
-  }
-
-  /**
-   * 注销账号
-   */
-  const deleteAccount = async () => {
-    try {
-      const res = await authApi.deleteAccount()
-      if (res.code === 200) {
-        await logout()
-        return { success: true }
-      }
-      return { success: false, message: res.message }
-    } catch (error: any) {
-      return { success: false, message: error.message || '注销账号失败' }
-    }
-  }
-
-  return {
-    token,
-    userInfo,
-    userProfile,
-    isAuthenticated,
-    isAdmin,
-    setToken,
-    clearToken,
-    login,
-    register,
-    fetchUserInfo,
-    logout,
-    changePassword,
-    updateProfile,
-    deleteAccount
-  }
-}, {
-  persist: {
-    key: 'user-store',
-    storage: localStorage
-  }
-})
+  )
+)

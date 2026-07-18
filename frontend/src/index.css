@@ -1,0 +1,669 @@
+@import '@arco-design/web-react/dist/css/arco.css';
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  width: 100%;
+  height: 100vh;
+}
+
+/* ---------- Login ---------- */
+.login-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, #76b900 0%, #5b8c00 50%, #3d5a00 100%);
+}
+
+.login-card {
+  position: relative;
+  z-index: 10;
+  width: 440px;
+  padding: 40px;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 20px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+  backdrop-filter: blur(10px);
+}
+
+.login-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.background-circle {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(118, 185, 0, 0.15);
+  animation: float 20s infinite linear;
+  pointer-events: none;
+}
+
+.circle1 {
+  width: 300px;
+  height: 300px;
+  top: -150px;
+  left: -150px;
+  background: rgba(91, 140, 0, 0.2);
+}
+
+.circle2 {
+  width: 200px;
+  height: 200px;
+  bottom: -100px;
+  right: -100px;
+  animation-delay: -10s;
+  background: rgba(118, 185, 0, 0.25);
+}
+
+.circle3 {
+  width: 150px;
+  height: 150px;
+  top: 50%;
+  right: 10%;
+  animation-delay: -15s;
+  background: rgba(61, 90, 0, 0.2);
+}
+
+@keyframes float {
+  0% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+  25% {
+    transform: translate(20px, 20px) rotate(90deg);
+  }
+  50% {
+    transform: translate(0, 40px) rotate(180deg);
+  }
+  75% {
+    transform: translate(-20px, 20px) rotate(270deg);
+  }
+  100% {
+    transform: translate(0, 0) rotate(360deg);
+  }
+}
+
+.login-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.login-title {
+  font-size: 32px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin-bottom: 8px;
+}
+
+.login-subtitle {
+  font-size: 14px;
+  color: #666;
+}
+
+.login-form {
+  margin-bottom: 20px;
+}
+
+.login-button {
+  width: 100%;
+  height: 44px;
+  font-size: 16px;
+  font-weight: 500;
+  border-radius: 8px;
+  background: linear-gradient(to right, #76b900, #5b8c00);
+  border: none;
+  transition: all 0.3s ease;
+}
+
+.login-button:hover {
+  background: linear-gradient(to right, #8bd100, #6ba200);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(118, 185, 0, 0.3);
+}
+
+.login-button:active {
+  transform: translateY(0);
+}
+
+.login-footer {
+  text-align: center;
+  font-size: 14px;
+  color: #666;
+  padding-top: 20px;
+  border-top: 1px solid #e4e7ed;
+}
+
+.login-container .arco-input {
+  border-radius: 8px;
+}
+
+.login-container .arco-input:hover {
+  border-color: #76b900;
+}
+
+.login-container .arco-input-focused {
+  border-color: #76b900;
+  box-shadow: 0 0 0 2px rgba(118, 185, 0, 0.1);
+}
+
+.login-container .arco-form-item-message {
+  color: #f56c6c;
+}
+
+.login-container .arco-checkbox-checked .arco-checkbox-icon svg {
+  color: #76b900;
+}
+
+.login-container .arco-link,
+.login-container .arco-btn-text {
+  color: #76b900;
+}
+
+.login-container .arco-link:hover,
+.login-container .arco-btn-text:hover {
+  color: #5b8c00;
+}
+
+/* ---------- Register ---------- */
+.register-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.register-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.register-card {
+  position: relative;
+  z-index: 10;
+  width: 480px;
+  padding: 40px;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 20px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(10px);
+}
+
+.register-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.register-title {
+  font-size: 32px;
+  font-weight: 600;
+  color: #303133;
+  margin-bottom: 8px;
+}
+
+.register-subtitle {
+  font-size: 14px;
+  color: #909399;
+}
+
+.register-form {
+  margin-bottom: 20px;
+}
+
+.register-button {
+  width: 100%;
+  height: 44px;
+  font-size: 16px;
+  font-weight: 500;
+  border-radius: 8px;
+}
+
+.register-footer {
+  text-align: center;
+  font-size: 14px;
+  color: #909399;
+  padding-top: 20px;
+  border-top: 1px solid #e4e7ed;
+}
+
+.register-container .arco-input {
+  border-radius: 8px;
+}
+
+.register-container .arco-input:hover {
+  border-color: #f5576c;
+}
+
+.register-container .arco-input-focused {
+  border-color: #f5576c;
+  box-shadow: 0 0 0 2px rgba(245, 87, 108, 0.1);
+}
+
+.register-container .arco-form-item-message {
+  color: #f56c6c;
+}
+
+.register-container .arco-button-primary {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  border: none;
+  transition: all 0.3s;
+}
+
+.register-container .arco-button-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(245, 87, 108, 0.4);
+}
+
+.register-container .arco-btn-text {
+  color: #f5576c;
+}
+
+/* ---------- User Management ---------- */
+.user-management {
+  padding: 20px;
+}
+
+.header-card {
+  margin-bottom: 20px;
+  border-radius: 12px;
+}
+
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.title-section h2 {
+  margin: 0 0 8px 0;
+  font-size: 24px;
+  color: #303133;
+}
+
+.subtitle {
+  margin: 0;
+  font-size: 14px;
+  color: #909399;
+}
+
+.button-group {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+/* ---------- User Profile ---------- */
+.user-profile {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.profile-header,
+.main-content-card {
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.profile-main {
+  display: flex;
+  align-items: center;
+  gap: 40px;
+  padding: 20px;
+}
+
+.profile-avatar {
+  position: relative;
+  cursor: pointer;
+}
+
+.avatar-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  opacity: 0;
+  transition: 0.3s;
+}
+
+.profile-avatar:hover .avatar-overlay {
+  opacity: 1;
+}
+
+.profile-info {
+  flex: 1;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.profile-username {
+  font-size: 24px;
+  font-weight: 600;
+  margin-bottom: 15px;
+}
+
+.profile-stats {
+  display: flex;
+  gap: 30px;
+}
+
+.stat-item {
+  text-align: center;
+  cursor: pointer;
+}
+
+.stat-number {
+  display: block;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.stat-label {
+  font-size: 13px;
+  color: #909399;
+}
+
+.main-tabs {
+  padding: 0 10px;
+}
+
+.settings-container {
+  min-height: 400px;
+  padding: 20px 0;
+}
+
+.settings-tabs {
+  height: 100%;
+}
+
+.user-profile .arco-tabs-tab-left {
+  margin-right: 30px;
+  width: 160px;
+  border-right: 1px solid var(--color-border-2);
+}
+
+.user-profile .arco-tabs-tab-title {
+  text-align: left;
+  height: 45px;
+  line-height: 45px;
+  font-size: 15px;
+  padding: 0 20px;
+}
+
+.settings-content {
+  padding-left: 10px;
+}
+
+.settings-header {
+  margin-bottom: 25px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid var(--color-border-2);
+}
+
+.settings-header h3 {
+  margin: 0 0 8px 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--color-text-1);
+}
+
+.settings-header p {
+  margin: 0;
+  font-size: 14px;
+  color: var(--color-text-3);
+}
+
+/* ---------- System Log ---------- */
+.system-log {
+  padding: 20px;
+}
+
+.log-card {
+  border-radius: 12px;
+}
+
+.log-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+.title-section h2 {
+  margin: 0 0 8px 0;
+  font-size: 22px;
+  color: #303133;
+}
+
+.subtitle {
+  margin: 0;
+  font-size: 13px;
+  color: #909399;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.file-select {
+  min-width: 200px;
+}
+
+.lines-label {
+  font-size: 13px;
+  color: #606266;
+}
+
+.log-content {
+  margin-top: 12px;
+  max-height: 600px;
+  background-color: #1e1e1e;
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.system-log pre {
+  margin: 0;
+  font-family: Consolas, Menlo, Monaco, 'Courier New', monospace;
+  font-size: 12px;
+  color: #d4d4d4;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+/* ---------- Admin Layout ---------- */
+.admin-layout {
+  height: 100vh;
+}
+
+.layout-container {
+  height: 100%;
+}
+
+.layout-aside {
+  background-color: #304156;
+}
+
+.aside-header {
+  padding: 20px;
+  border-bottom: 1px solid #434a50;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #fff;
+}
+
+.logo-text {
+  font-size: 18px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.aside-menu {
+  border-right: none;
+}
+
+.layout-main {
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+}
+
+.layout-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  background: rgba(255, 255, 255, 0.95);
+  border-bottom: 1px solid #e4e7ed;
+  backdrop-filter: blur(10px);
+}
+
+.header-right .user-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  padding: 8px 12px;
+  border-radius: 20px;
+  transition: all 0.3s;
+}
+
+.header-right .user-info:hover {
+  background-color: #f5f7fa;
+}
+
+.username {
+  font-size: 14px;
+  color: #606266;
+  font-weight: 500;
+}
+
+.layout-content {
+  padding: 20px;
+  background: #fafbfc;
+}
+
+.admin-layout .arco-menu-item {
+  color: #bfcbd9;
+}
+
+.admin-layout .arco-menu-selected {
+  background-color: #263445 !important;
+  color: #fff;
+}
+
+/* ---------- User Table ---------- */
+.table-card {
+  border-radius: 12px;
+}
+
+.user-table {
+  margin-bottom: 20px;
+}
+
+.pagination {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 20px;
+}
+
+.table-card .arco-tag {
+  font-weight: 500;
+}
+
+.table-card .arco-button-group {
+  display: inline-flex;
+}
+
+/* ---------- User Form Dialog ---------- */
+.user-form {
+  padding: 20px 20px 0 20px;
+}
+
+/* ---------- User Search Form ---------- */
+.search-card {
+  margin-bottom: 20px;
+  border-radius: 12px;
+}
+
+.search-form {
+  margin-bottom: -18px;
+}
+
+.search-form .arco-form-item {
+  margin-right: 20px;
+}
+
+/* ---------- Not Found ---------- */
+.not-found-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 80vh;
+  text-align: center;
+  font-family: 'Arial', sans-serif;
+  color: #333;
+}
+
+.not-found-container h1 {
+  font-size: 10em;
+  margin-bottom: 0.1em;
+  color: #165DFF;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.not-found-container p {
+  font-size: 1.5em;
+  margin-bottom: 2em;
+}
+
+/* ---------- Security Settings ---------- */
+.security-section h3 {
+  margin-bottom: 20px;
+}
+
+.danger-section {
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 1px solid #eee;
+}
