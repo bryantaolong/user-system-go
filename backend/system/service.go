@@ -1,4 +1,4 @@
-package service
+package system
 
 import (
 	"bufio"
@@ -9,15 +9,17 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/bryan/user-system/internal/config"
-	"github.com/bryan/user-system/internal/pkg/response"
+	"github.com/bryan/user-system/config"
+	"github.com/bryan/user-system/response"
 	"go.uber.org/zap"
 )
 
+// LogService 系统日志服务
 type LogService struct {
 	logger *zap.Logger
 }
 
+// NewLogService 创建日志服务实例
 func NewLogService(logger *zap.Logger) *LogService {
 	return &LogService{logger: logger}
 }

@@ -1,32 +1,60 @@
-package service
+package user
 
 import (
 	"context"
 	"fmt"
+	"mime/multipart"
 	"strings"
 	"time"
 
-	"github.com/bryan/user-system/internal/model"
-	"github.com/bryan/user-system/internal/pkg/jwt"
-	"github.com/bryan/user-system/internal/pkg/response"
-	"github.com/bryan/user-system/internal/repository"
+	"github.com/bryan/user-system/auth"
+	"github.com/bryan/user-system/model"
+	"github.com/bryan/user-system/pkg/jwt"
+	"github.com/bryan/user-system/response"
 	"github.com/xuri/excelize/v2"
 	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
 )
 
-type UserService struct {
-	userRepo *repository.UserRepository
-	roleSvc  *UserRoleService
+// RoleService 角色服务（依赖 auth 模块的角色仓库）
+type RoleService struct {
+	roleRepo *auth.UserRoleRepository
+}
+
+// NewRoleService 创建角色服务实例
+func NewRoleService(roleRepo *auth.UserRoleRepository) *RoleService {
+	return &RoleService{roleRepo: roleRepo}
+}
+
+// ListAll 查询所有角色
+func (s *RoleService) ListAll(ctx context.Context) ([]model.UserRole, error) {
+	return s.roleRepo.SelectAll()
+}
+
+// GetDefaultRole 查询默认角色
+func (s *RoleService) GetDefaultRole(ctx context.Context) (*model.UserRole, error) {
+	return s.roleRepo.SelectOneByIsDefaultTrue()
+}
+
+// ListByIDs 根据 ID 列表查询角色
+func (s *RoleService) ListByIDs(ctx context.Context, ids []int) ([]model.UserRole, error) {
+	return s.roleRepo.SelectByIDList(ids)
+}
+
+// Service 用户服务
+type Service struct {
+	userRepo *auth.UserRepository
+	roleSvc  *RoleService
 	logger   *zap.Logger
 }
 
-func NewUserService(
-	userRepo *repository.UserRepository,
-	roleSvc *UserRoleService,
+// NewService 创建用户服务实例
+func NewService(
+	userRepo *auth.UserRepository,
+	roleSvc *RoleService,
 	logger *zap.Logger,
-) *UserService {
-	return &UserService{
+) *Service {
+	return &Service{
 		userRepo: userRepo,
 		roleSvc:  roleSvc,
 		logger:   logger,
@@ -34,7 +62,7 @@ func NewUserService(
 }
 
 // CreateUser 管理员创建用户
-func (s *UserService) CreateUser(ctx context.Context, req *model.UserCreateRequest) (*model.SysUser, error) {
+func (s *Service) CreateUser(ctx context.Context, req *model.UserCreateRequest) (*model.SysUser, error) {
 	existing, _ := s.userRepo.SelectByUsername(req.Username)
 	if existing != nil {
 		return nil, response.NewBusinessError("用户名已存在")
@@ -95,7 +123,7 @@ func (s *UserService) CreateUser(ctx context.Context, req *model.UserCreateReque
 }
 
 // GetAllUsers 获取所有用户列表（分页）
-func (s *UserService) GetAllUsers(ctx context.Context, pageNum, pageSize int) (*response.PageResult, error) {
+func (s *Service) GetAllUsers(ctx context.Context, pageNum, pageSize int) (*response.PageResult, error) {
 	offset := (pageNum - 1) * pageSize
 	users, err := s.userRepo.SelectPageByConditions(offset, pageSize, nil)
 	if err != nil {
@@ -112,7 +140,7 @@ func (s *UserService) GetAllUsers(ctx context.Context, pageNum, pageSize int) (*
 }
 
 // GetUserByID 根据用户 ID 获取用户信息
-func (s *UserService) GetUserByID(ctx context.Context, userID int64) (*model.SysUser, error) {
+func (s *Service) GetUserByID(ctx context.Context, userID int64) (*model.SysUser, error) {
 	user, err := s.userRepo.SelectByID(userID)
 	if err != nil {
 		return nil, response.NewResourceNotFoundError("用户不存在")
@@ -121,7 +149,7 @@ func (s *UserService) GetUserByID(ctx context.Context, userID int64) (*model.Sys
 }
 
 // GetUserByUsername 根据用户名获取用户信息
-func (s *UserService) GetUserByUsername(ctx context.Context, username string) (*model.SysUser, error) {
+func (s *Service) GetUserByUsername(ctx context.Context, username string) (*model.SysUser, error) {
 	user, err := s.userRepo.SelectByUsername(username)
 	if err != nil {
 		return nil, err
@@ -130,7 +158,7 @@ func (s *UserService) GetUserByUsername(ctx context.Context, username string) (*
 }
 
 // QueryUsers 通用用户搜索
-func (s *UserService) QueryUsers(ctx context.Context, req *model.UserQueryRequest, pageNum, pageSize int) (*response.PageResult, error) {
+func (s *Service) QueryUsers(ctx context.Context, req *model.UserQueryRequest, pageNum, pageSize int) (*response.PageResult, error) {
 	offset := (pageNum - 1) * pageSize
 	users, err := s.userRepo.SelectPageByConditions(offset, pageSize, req)
 	if err != nil {
@@ -147,7 +175,7 @@ func (s *UserService) QueryUsers(ctx context.Context, req *model.UserQueryReques
 }
 
 // UpdateUser 更新用户基础信息
-func (s *UserService) UpdateUser(ctx context.Context, userID int64, req *model.UserUpdateRequest) (*model.SysUser, error) {
+func (s *Service) UpdateUser(ctx context.Context, userID int64, req *model.UserUpdateRequest) (*model.SysUser, error) {
 	user, err := s.GetUserByID(ctx, userID)
 	if err != nil {
 		return nil, err
@@ -176,7 +204,7 @@ func (s *UserService) UpdateUser(ctx context.Context, userID int64, req *model.U
 }
 
 // ChangeRoleByIds 修改用户角色
-func (s *UserService) ChangeRoleByIds(ctx context.Context, userID int64, req *model.ChangeRoleRequest) (*model.SysUser, error) {
+func (s *Service) ChangeRoleByIds(ctx context.Context, userID int64, req *model.ChangeRoleRequest) (*model.SysUser, error) {
 	roles, err := s.roleSvc.ListByIDs(ctx, req.RoleIDs)
 	if err != nil {
 		return nil, response.NewBusinessError("角色查询失败")
@@ -207,7 +235,7 @@ func (s *UserService) ChangeRoleByIds(ctx context.Context, userID int64, req *mo
 }
 
 // ResetPassword 重置用户密码（管理员）
-func (s *UserService) ResetPassword(ctx context.Context, userID int64, newPassword string) (*model.SysUser, error) {
+func (s *Service) ResetPassword(ctx context.Context, userID int64, newPassword string) (*model.SysUser, error) {
 	user, err := s.GetUserByID(ctx, userID)
 	if err != nil {
 		return nil, err
@@ -237,7 +265,7 @@ func (s *UserService) ResetPassword(ctx context.Context, userID int64, newPasswo
 }
 
 // BlockUser 封禁指定用户
-func (s *UserService) BlockUser(ctx context.Context, userID int64) (*model.SysUser, error) {
+func (s *Service) BlockUser(ctx context.Context, userID int64) (*model.SysUser, error) {
 	user, err := s.GetUserByID(ctx, userID)
 	if err != nil {
 		return nil, err
@@ -260,7 +288,7 @@ func (s *UserService) BlockUser(ctx context.Context, userID int64) (*model.SysUs
 }
 
 // UnblockUser 解封指定用户
-func (s *UserService) UnblockUser(ctx context.Context, userID int64) (*model.SysUser, error) {
+func (s *Service) UnblockUser(ctx context.Context, userID int64) (*model.SysUser, error) {
 	user, err := s.GetUserByID(ctx, userID)
 	if err != nil {
 		return nil, err
@@ -283,7 +311,7 @@ func (s *UserService) UnblockUser(ctx context.Context, userID int64) (*model.Sys
 }
 
 // DeleteUser 删除用户（逻辑删除）
-func (s *UserService) DeleteUser(ctx context.Context, userID int64) (int64, error) {
+func (s *Service) DeleteUser(ctx context.Context, userID int64) (int64, error) {
 	operator := getCurrentOperator(ctx)
 	if err := s.userRepo.DeleteByID(userID, operator); err != nil {
 		return 0, response.NewResourceNotFoundError("用户不存在或已被删除")
@@ -293,7 +321,7 @@ func (s *UserService) DeleteUser(ctx context.Context, userID int64) (int64, erro
 }
 
 // ExportAllUsers 全量导出用户数据为 Excel
-func (s *UserService) ExportAllUsers() (*excelize.File, error) {
+func (s *Service) ExportAllUsers() (*excelize.File, error) {
 	f := excelize.NewFile()
 	sheet := "用户列表"
 	f.SetSheetName("Sheet1", sheet)
@@ -350,6 +378,136 @@ func (s *UserService) ExportAllUsers() (*excelize.File, error) {
 	return f, nil
 }
 
+// ProfileService 用户资料服务
+type ProfileService struct {
+	profileRepo *ProfileRepository
+	fileSvc     *FileService
+	logger      *zap.Logger
+}
+
+// NewProfileService 创建用户资料服务实例
+func NewProfileService(
+	profileRepo *ProfileRepository,
+	fileSvc *FileService,
+	logger *zap.Logger,
+) *ProfileService {
+	return &ProfileService{
+		profileRepo: profileRepo,
+		fileSvc:     fileSvc,
+		logger:      logger,
+	}
+}
+
+// CreateUserProfile 创建用户资料
+func (s *ProfileService) CreateUserProfile(ctx context.Context, record *model.UserProfile) (*model.UserProfile, error) {
+	now := time.Now()
+	operator := getCurrentOperator(ctx)
+	record.Deleted = 0
+	record.Version = 0
+	record.CreatedAt = now
+	record.UpdatedAt = now
+	record.CreatedBy = &operator
+	record.UpdatedBy = &operator
+
+	if err := s.profileRepo.Insert(record); err != nil {
+		return nil, response.NewPersistenceError("创建用户信息失败")
+	}
+	s.logger.Info("用户信息创建成功", zap.Int64("userId", record.UserID))
+	return record, nil
+}
+
+// GetUserProfileByUserId 根据用户主键查询用户资料
+func (s *ProfileService) GetUserProfileByUserId(ctx context.Context, userID int64) (*model.UserProfile, error) {
+	profile, err := s.profileRepo.SelectByUserID(userID)
+	if err != nil {
+		return nil, response.NewResourceNotFoundError("用户信息不存在")
+	}
+	return profile, nil
+}
+
+// GetUserProfileByUserIdOrEmpty 如果不存在则返回空实体
+func (s *ProfileService) GetUserProfileByUserIdOrEmpty(ctx context.Context, userID int64) *model.UserProfile {
+	profile, err := s.profileRepo.SelectByUserID(userID)
+	if err != nil {
+		s.logger.Warn("用户资料不存在，返回空实体", zap.Int64("userId", userID))
+		return &model.UserProfile{UserID: userID}
+	}
+	return profile
+}
+
+// GetUserProfileByRealName 根据真实姓名查询用户资料
+func (s *ProfileService) GetUserProfileByRealName(ctx context.Context, realName string) (*model.UserProfile, error) {
+	profile, err := s.profileRepo.SelectByRealName(realName)
+	if err != nil {
+		return nil, response.NewResourceNotFoundError("用户信息不存在")
+	}
+	return profile, nil
+}
+
+// UpdateUserProfile 更新用户资料
+func (s *ProfileService) UpdateUserProfile(ctx context.Context, userID int64, req *model.UserUpdateRequest) (*model.UserProfile, error) {
+	profile, err := s.GetUserProfileByUserId(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	if req.RealName != nil {
+		profile.RealName = req.RealName
+	}
+	if req.Gender != nil {
+		g := model.Gender(*req.Gender)
+		profile.Gender = &g
+	}
+	if req.Birthday != nil {
+		t, _ := time.Parse(time.RFC3339, *req.Birthday)
+		profile.Birthday = &t
+	}
+	if req.Avatar != nil {
+		profile.Avatar = req.Avatar
+	}
+
+	profile.Version++
+	profile.UpdatedAt = time.Now()
+	profile.UpdatedBy = strPtr(getCurrentOperator(ctx))
+
+	if err := s.profileRepo.Update(profile); err != nil {
+		return nil, response.NewPersistenceError("用户信息更新失败")
+	}
+
+	s.logger.Info("用户信息更新成功", zap.Int64("userId", userID))
+	return profile, nil
+}
+
+// UpdateAvatar 上传并更新用户头像
+func (s *ProfileService) UpdateAvatar(ctx context.Context, userID int64, file *multipart.FileHeader) (string, error) {
+	profile, err := s.GetUserProfileByUserId(ctx, userID)
+	if err != nil {
+		return "", err
+	}
+
+	avatarPath, err := s.fileSvc.StoreFile(file, "avatars")
+	if err != nil {
+		return "", response.NewPersistenceError("头像上传失败: " + err.Error())
+	}
+
+	// 删除旧头像
+	if profile.Avatar != nil && *profile.Avatar != "" {
+		s.fileSvc.DeleteFile(*profile.Avatar)
+	}
+
+	profile.Avatar = &avatarPath
+	profile.Version++
+	profile.UpdatedAt = time.Now()
+	profile.UpdatedBy = strPtr(getCurrentOperator(ctx))
+
+	if err := s.profileRepo.Update(profile); err != nil {
+		return "", response.NewPersistenceError("头像更新失败")
+	}
+
+	s.logger.Info("用户头像更新成功", zap.Int64("userId", userID), zap.String("path", avatarPath))
+	return avatarPath, nil
+}
+
 // getCurrentOperator 获取当前操作者标识
 func getCurrentOperator(ctx context.Context) string {
 	claims, ok := ctx.Value("claims").(*jwt.Claims)
@@ -372,3 +530,6 @@ func formatTime(t *time.Time) string {
 	}
 	return t.Format("2006-01-02 15:04:05")
 }
+
+func intPtr(i int) *int       { return &i }
+func strPtr(s string) *string { return &s }

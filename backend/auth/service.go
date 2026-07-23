@@ -1,35 +1,36 @@
-package service
+package auth
 
 import (
 	"context"
 	"fmt"
 	"time"
 
-	"github.com/bryan/user-system/internal/config"
-	"github.com/bryan/user-system/internal/model"
-	pkgHttp "github.com/bryan/user-system/internal/pkg/http"
-	"github.com/bryan/user-system/internal/pkg/jwt"
-	"github.com/bryan/user-system/internal/pkg/redis"
-	"github.com/bryan/user-system/internal/pkg/response"
-	"github.com/bryan/user-system/internal/repository"
+	"github.com/bryan/user-system/config"
+	"github.com/bryan/user-system/model"
+	pkgHttp "github.com/bryan/user-system/pkg/http"
+	"github.com/bryan/user-system/pkg/jwt"
+	"github.com/bryan/user-system/cache"
+	"github.com/bryan/user-system/response"
 	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
 )
 
-type AuthService struct {
-	userRepo *repository.UserRepository
-	roleRepo *repository.UserRoleRepository
+// Service 认证服务
+type Service struct {
+	userRepo *UserRepository
+	roleRepo *UserRoleRepository
 	redis    *redis.RedisClient
 	logger   *zap.Logger
 }
 
-func NewAuthService(
-	userRepo *repository.UserRepository,
-	roleRepo *repository.UserRoleRepository,
+// NewService 创建认证服务实例
+func NewService(
+	userRepo *UserRepository,
+	roleRepo *UserRoleRepository,
 	redisSvc *redis.RedisClient,
 	logger *zap.Logger,
-) *AuthService {
-	return &AuthService{
+) *Service {
+	return &Service{
 		userRepo: userRepo,
 		roleRepo: roleRepo,
 		redis:    redisSvc,
@@ -38,7 +39,7 @@ func NewAuthService(
 }
 
 // Register 用户注册
-func (s *AuthService) Register(ctx context.Context, req *model.RegisterRequest) (*model.SysUser, error) {
+func (s *Service) Register(ctx context.Context, req *model.RegisterRequest) (*model.SysUser, error) {
 	// 1. 检查用户名是否已存在
 	existing, _ := s.userRepo.SelectByUsername(req.Username)
 	if existing != nil {
@@ -89,7 +90,7 @@ func (s *AuthService) Register(ctx context.Context, req *model.RegisterRequest) 
 }
 
 // Login 用户登录
-func (s *AuthService) Login(ctx context.Context, req *model.LoginRequest, userAgent, clientIP string) (string, error) {
+func (s *Service) Login(ctx context.Context, req *model.LoginRequest, userAgent, clientIP string) (string, error) {
 	// 1. 验证用户凭证
 	user, err := s.userRepo.SelectByUsername(req.Username)
 	if err != nil || user == nil {
@@ -104,11 +105,11 @@ func (s *AuthService) Login(ctx context.Context, req *model.LoginRequest, userAg
 			currentFailCount = *user.LoginFailCount
 		}
 		user.LoginFailCount = intPtr(currentFailCount + 1)
-		oprator := user.Username
-		if oprator == "" {
-			oprator = "SYSTEM"
+		operator := user.Username
+		if operator == "" {
+			operator = "SYSTEM"
 		}
-		user.UpdatedBy = strPtr(oprator)
+		user.UpdatedBy = strPtr(operator)
 		user.Version++
 
 		// 如果输入密码错误次数达到限额，则锁定账号
@@ -140,13 +141,13 @@ func (s *AuthService) Login(ctx context.Context, req *model.LoginRequest, userAg
 	user.LastLoginIP = &clientIP
 	user.LastLoginDevice = &device
 	user.LoginFailCount = intPtr(0)
-	oprator := user.Username
-	if oprator == "" {
-		oprator = "SYSTEM"
+	operator := user.Username
+	if operator == "" {
+		operator = "SYSTEM"
 	}
 	user.Version++
 	user.UpdatedAt = now
-	user.UpdatedBy = strPtr(oprator)
+	user.UpdatedBy = strPtr(operator)
 	_ = s.userRepo.Update(user)
 
 	// 5. 生成新的 JWT Token
@@ -168,7 +169,7 @@ func (s *AuthService) Login(ctx context.Context, req *model.LoginRequest, userAg
 }
 
 // GetCurrentUserID 获取当前登录用户的 ID
-func (s *AuthService) GetCurrentUserID(ctx context.Context) (int64, error) {
+func (s *Service) GetCurrentUserID(ctx context.Context) (int64, error) {
 	claims, ok := ctx.Value("claims").(*jwt.Claims)
 	if !ok || claims == nil {
 		return 0, response.NewUnauthorizedError("未授权")
@@ -177,7 +178,7 @@ func (s *AuthService) GetCurrentUserID(ctx context.Context) (int64, error) {
 }
 
 // GetCurrentUsername 获取当前登录用户的用户名
-func (s *AuthService) GetCurrentUsername(ctx context.Context) (string, error) {
+func (s *Service) GetCurrentUsername(ctx context.Context) (string, error) {
 	claims, ok := ctx.Value("claims").(*jwt.Claims)
 	if !ok || claims == nil {
 		return "", response.NewUnauthorizedError("未授权")
@@ -186,7 +187,7 @@ func (s *AuthService) GetCurrentUsername(ctx context.Context) (string, error) {
 }
 
 // GetCurrentUser 获取当前登录用户的完整信息
-func (s *AuthService) GetCurrentUser(ctx context.Context) (*model.SysUser, error) {
+func (s *Service) GetCurrentUser(ctx context.Context) (*model.SysUser, error) {
 	userID, err := s.GetCurrentUserID(ctx)
 	if err != nil {
 		return nil, err
@@ -199,7 +200,7 @@ func (s *AuthService) GetCurrentUser(ctx context.Context) (*model.SysUser, error
 }
 
 // IsAdmin 判断用户是否具有管理员权限
-func (s *AuthService) IsAdmin(ctx context.Context) bool {
+func (s *Service) IsAdmin(ctx context.Context) bool {
 	claims, ok := ctx.Value("claims").(*jwt.Claims)
 	if !ok || claims == nil {
 		return false
@@ -213,12 +214,12 @@ func (s *AuthService) IsAdmin(ctx context.Context) bool {
 }
 
 // ValidateToken 校验 JWT Token 是否有效
-func (s *AuthService) ValidateToken(token string) bool {
+func (s *Service) ValidateToken(token string) bool {
 	return jwt.ValidateToken(token)
 }
 
 // RefreshToken 刷新 JWT Token
-func (s *AuthService) RefreshToken(ctx context.Context) (string, error) {
+func (s *Service) RefreshToken(ctx context.Context) (string, error) {
 	username, err := s.GetCurrentUsername(ctx)
 	if err != nil {
 		return "", err
@@ -243,7 +244,7 @@ func (s *AuthService) RefreshToken(ctx context.Context) (string, error) {
 }
 
 // ChangePassword 修改用户密码
-func (s *AuthService) ChangePassword(ctx context.Context, oldPassword, newPassword string) (*model.SysUser, error) {
+func (s *Service) ChangePassword(ctx context.Context, oldPassword, newPassword string) (*model.SysUser, error) {
 	user, err := s.GetCurrentUser(ctx)
 	if err != nil {
 		return nil, err
@@ -261,14 +262,14 @@ func (s *AuthService) ChangePassword(ctx context.Context, oldPassword, newPasswo
 	now := time.Now()
 	user.Password = string(hashedPwd)
 	user.PasswordResetAt = &now
-	oprator := user.Username
-	if oprator == "" {
-		oprator = "SYSTEM"
+	operator := user.Username
+	if operator == "" {
+		operator = "SYSTEM"
 	}
 
 	user.Version++
 	user.UpdatedAt = now
-	user.UpdatedBy = strPtr(oprator)
+	user.UpdatedBy = strPtr(operator)
 
 	if err := s.userRepo.Update(user); err != nil {
 		return nil, response.NewBusinessError("密码修改失败")
@@ -285,7 +286,7 @@ func (s *AuthService) ChangePassword(ctx context.Context, oldPassword, newPasswo
 }
 
 // Logout 退出登录
-func (s *AuthService) Logout(ctx context.Context) error {
+func (s *Service) Logout(ctx context.Context) error {
 	username, err := s.GetCurrentUsername(ctx)
 	if err != nil {
 		return err
@@ -297,7 +298,7 @@ func (s *AuthService) Logout(ctx context.Context) error {
 }
 
 // DeleteAccount 注销用户
-func (s *AuthService) DeleteAccount(ctx context.Context) (*model.SysUser, error) {
+func (s *Service) DeleteAccount(ctx context.Context) (*model.SysUser, error) {
 	user, err := s.GetCurrentUser(ctx)
 	if err != nil {
 		return nil, err

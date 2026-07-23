@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/bryan/user-system/internal/config"
+	"github.com/bryan/user-system/config"
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 )

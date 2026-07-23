@@ -20,15 +20,14 @@
 
 ```
 backend/
-  cmd/server/          # 应用入口
-  internal/
-    config/            # 配置加载
-    handler/           # HTTP 处理器
-    middleware/        # 中间件（认证、CORS、错误处理）
-    model/             # 数据模型 & DTO
-    pkg/               # 工具包（JWT、Redis、HTTP、响应）
-    repository/        # 数据访问层
-    service/           # 业务逻辑层
+  main.go              # 应用入口
+  auth/                # 认证模块（handler、service、repository、middleware）
+  user/                # 用户模块（handler、service、repository、file）
+  system/              # 系统模块（日志等）
+  config/              # 配置加载
+  middleware/          # 全局中间件（CORS、错误处理）
+  model/               # 数据模型 & DTO
+  pkg/                 # 工具包（JWT、Redis、HTTP、响应）
   config.yaml          # 配置文件
   go.mod
 frontend/
@@ -62,7 +61,7 @@ frontend/
    ```sh
    cd backend
    go mod tidy
-   go run cmd/server/main.go
+   go run main.go
    ```
 
 ## 常用接口

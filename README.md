@@ -20,15 +20,14 @@ This project is a user management system based on Go (Gin framework), supporting
 
 ```
 backend/
-  cmd/server/           # Application entry point
-  internal/
-    config/            # Configuration loading
-    handler/           # HTTP handlers
-    middleware/        # Middleware (auth, CORS, error handling)
-    model/             # Data models & DTOs
-    pkg/               # Utility packages (JWT, Redis, HTTP, response)
-    repository/        # Data access layer
-    service/           # Business logic layer
+  main.go              # Application entry point
+  auth/                # Auth module (handler, service, repository, middleware)
+  user/                # User module (handler, service, repository, file)
+  system/              # System module (logs, etc.)
+  config/              # Configuration loading
+  middleware/          # Global middleware (CORS, error handling)
+  model/               # Data models & DTOs
+  pkg/                 # Utility packages (JWT, Redis, HTTP, response)
   config.yaml          # Configuration file
   go.mod
 frontend/
@@ -62,7 +61,7 @@ frontend/
    ```sh
    cd backend
    go mod tidy
-   go run cmd/server/main.go
+   go run main.go
    ```
 
 ## Main APIs

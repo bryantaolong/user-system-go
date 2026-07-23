@@ -3,7 +3,7 @@ package middleware
 import (
 	"net/http"
 
-	"github.com/bryan/user-system/internal/pkg/response"
+	"github.com/bryan/user-system/response"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 )
