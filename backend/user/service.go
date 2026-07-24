@@ -123,7 +123,7 @@ func (s *Service) CreateUser(ctx context.Context, req *model.UserCreateRequest) 
 }
 
 // GetAllUsers 获取所有用户列表（分页）
-func (s *Service) GetAllUsers(ctx context.Context, pageNum, pageSize int) (*response.PageResult, error) {
+func (s *Service) GetAllUsers(ctx context.Context, pageNum, pageSize int) (*response.PageResponse, error) {
 	offset := (pageNum - 1) * pageSize
 	users, err := s.userRepo.SelectPageByConditions(offset, pageSize, nil)
 	if err != nil {
@@ -135,7 +135,7 @@ func (s *Service) GetAllUsers(ctx context.Context, pageNum, pageSize int) (*resp
 	for i := range users {
 		rows = append(rows, users[i])
 	}
-	pr := response.NewPageResult(rows, total, pageNum, pageSize)
+	pr := response.NewPageResponse(rows, total, pageNum, pageSize)
 	return &pr, nil
 }
 
@@ -158,7 +158,7 @@ func (s *Service) GetUserByUsername(ctx context.Context, username string) (*mode
 }
 
 // QueryUsers 通用用户搜索
-func (s *Service) QueryUsers(ctx context.Context, req *model.UserQueryRequest, pageNum, pageSize int) (*response.PageResult, error) {
+func (s *Service) QueryUsers(ctx context.Context, req *model.UserQueryRequest, pageNum, pageSize int) (*response.PageResponse, error) {
 	offset := (pageNum - 1) * pageSize
 	users, err := s.userRepo.SelectPageByConditions(offset, pageSize, req)
 	if err != nil {
@@ -170,7 +170,7 @@ func (s *Service) QueryUsers(ctx context.Context, req *model.UserQueryRequest, p
 	for i := range users {
 		rows = append(rows, users[i])
 	}
-	pr := response.NewPageResult(rows, total, pageNum, pageSize)
+	pr := response.NewPageResponse(rows, total, pageNum, pageSize)
 	return &pr, nil
 }
 

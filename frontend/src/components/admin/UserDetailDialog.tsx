@@ -1,5 +1,5 @@
 import { Modal, Descriptions, Tag } from '@arco-design/web-react'
-import type { SysUser } from '@shared/models/entity'
+import type { SysUser } from '@/models/entity'
 
 const UserDetailDialog = ({ visible, user, onClose }: { visible: boolean; user: SysUser | null; onClose: () => void }) => {
   const formatDateTime = (dateString: string | undefined | null) => {

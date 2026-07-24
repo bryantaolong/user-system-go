@@ -2,8 +2,8 @@ import { useState, useEffect, useRef } from 'react'
 import { Modal, Form, Input, Select } from '@arco-design/web-react'
 import message from '@arco-design/web-react/es/Message'
 import * as userRoleApi from '@/api/user/userRole'
-import type { UserRoleOptionVO } from '@shared/models/vo'
-import type { UserUpdateRequest } from '@shared/models/request/user'
+import type { UserRoleOptionVO } from '@/models/vo'
+import type { UserUpdateRequest } from '@/models/request/user'
 
 export interface UserFormData extends UserUpdateRequest {
   username?: string

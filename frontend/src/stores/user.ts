@@ -2,8 +2,8 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import * as authApi from '@/api/auth/auth'
 import * as userProfileApi from '@/api/user/userProfile'
-import type { UserVO } from '@shared/models/vo'
-import type { UserProfileVO } from '@shared/models/vo'
+import type { UserVO } from '@/models/vo'
+import type { UserProfileVO } from '@/models/vo'
 
 interface UserInfo extends UserVO {}
 

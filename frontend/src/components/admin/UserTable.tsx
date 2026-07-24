@@ -9,7 +9,7 @@ import {
   IconDelete,
   IconDown,
 } from '@arco-design/web-react/icon'
-import type { SysUser } from '@shared/models/entity'
+import type { SysUser } from '@/models/entity'
 
 interface UserTableProps {
   loading: boolean

@@ -1,5 +1,5 @@
 import request from '@/utils/request'
-import type { Result } from '@shared/models/response'
+import type { ApiResponse } from '@/models/response'
 
 /**
  * 系统日志监控 API
@@ -10,7 +10,7 @@ import type { Result } from '@shared/models/response'
  * @param lines 返回的最大行数，默认 200
  * @param file 日志文件名，可选
  */
-export function listLatestLogs(lines = 200, file?: string): Promise<Result<string[]>> {
+export function listLatestLogs(lines = 200, file?: string): Promise<ApiResponse<string[]>> {
   return request.get('/api/admin/logs', {
     params: { lines, file }
   })
@@ -19,6 +19,6 @@ export function listLatestLogs(lines = 200, file?: string): Promise<Result<strin
 /**
  * 获取可用的日志文件列表
  */
-export function listLogFiles(): Promise<Result<string[]>> {
+export function listLogFiles(): Promise<ApiResponse<string[]>> {
   return request.get('/api/admin/logs/files')
 }
