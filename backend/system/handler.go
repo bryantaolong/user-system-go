@@ -4,7 +4,6 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/bryan/user-system/model"
 	"github.com/bryan/user-system/response"
 	"github.com/gin-gonic/gin"
 )
@@ -35,11 +34,7 @@ func (h *Handler) ListLatestLogs(c *gin.Context) {
 // ListLogFiles 获取可用的日志文件列表
 func (h *Handler) ListLogFiles(c *gin.Context) {
 	files := h.logSvc.ListLogFiles()
-	c.JSON(http.StatusOK, model.Result{
-		Code:    200,
-		Message: "成功",
-		Data:    files,
-	})
+	response.Success(c, files)
 }
 
 // handleError 统一错误处理

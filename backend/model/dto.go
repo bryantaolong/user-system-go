@@ -61,48 +61,6 @@ type UserExportRequest struct {
 	FileName *string `json:"fileName" form:"fileName"`
 }
 
-// ========== 响应 DTO ==========
-
-// Result 统一响应封装
-type Result struct {
-	Code    int         `json:"code"`
-	Message string      `json:"message"`
-	Data    interface{} `json:"data"`
-}
-
-func SuccessResult(data interface{}) Result {
-	return Result{Code: 200, Message: "成功", Data: data}
-}
-
-func ErrorResult(code int, message string) Result {
-	return Result{Code: code, Message: message, Data: nil}
-}
-
-// PageResult 分页结果
-type PageResult struct {
-	Rows     []interface{} `json:"rows"`
-	Total    int64         `json:"total"`
-	PageNum  int           `json:"pageNum"`
-	PageSize int           `json:"pageSize"`
-	Pages    int64         `json:"pages"`
-}
-
-func NewPageResult(rows []interface{}, total int64, pageNum, pageSize int) PageResult {
-	var pages int64
-	if total == 0 || pageSize == 0 {
-		pages = 0
-	} else {
-		pages = (total + int64(pageSize) - 1) / int64(pageSize)
-	}
-	return PageResult{
-		Rows:     rows,
-		Total:    total,
-		PageNum:  pageNum,
-		PageSize: pageSize,
-		Pages:    pages,
-	}
-}
-
 // ========== VO ==========
 
 // UserVO 用户展示 VO

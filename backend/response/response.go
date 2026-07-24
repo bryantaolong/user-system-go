@@ -17,15 +17,15 @@ const (
 	StatusInternalError = 500
 )
 
-// Result 统一响应结构
-type Result struct {
+// ApiResponse 统一响应结构
+type ApiResponse struct {
 	Code    int         `json:"code"`
 	Message string      `json:"message"`
 	Data    interface{} `json:"data"`
 }
 
-// PageResult 分页结果
-type PageResult struct {
+// PageResponse 分页结果
+type PageResponse struct {
 	Rows     interface{} `json:"rows"`
 	Total    int64       `json:"total"`
 	PageNum  int         `json:"pageNum"`
@@ -33,14 +33,14 @@ type PageResult struct {
 	Pages    int64       `json:"pages"`
 }
 
-func NewPageResult(rows interface{}, total int64, pageNum, pageSize int) PageResult {
+func NewPageResponse(rows interface{}, total int64, pageNum, pageSize int) PageResponse {
 	var pages int64
 	if total == 0 || pageSize == 0 {
 		pages = 0
 	} else {
 		pages = (total + int64(pageSize) - 1) / int64(pageSize)
 	}
-	return PageResult{
+	return PageResponse{
 		Rows:     rows,
 		Total:    total,
 		PageNum:  pageNum,
@@ -50,7 +50,7 @@ func NewPageResult(rows interface{}, total int64, pageNum, pageSize int) PageRes
 }
 
 func Success(c *gin.Context, data interface{}) {
-	c.JSON(http.StatusOK, Result{
+	c.JSON(http.StatusOK, ApiResponse{
 		Code:    StatusSuccess,
 		Message: "成功",
 		Data:    data,
@@ -58,7 +58,7 @@ func Success(c *gin.Context, data interface{}) {
 }
 
 func Error(c *gin.Context, httpStatus int, msg string) {
-	c.JSON(http.StatusOK, Result{
+	c.JSON(http.StatusOK, ApiResponse{
 		Code:    httpStatus,
 		Message: msg,
 		Data:    nil,
@@ -66,7 +66,7 @@ func Error(c *gin.Context, httpStatus int, msg string) {
 }
 
 func ErrorWithHTTPStatus(c *gin.Context, httpStatus int, code int, msg string) {
-	c.JSON(httpStatus, Result{
+	c.JSON(httpStatus, ApiResponse{
 		Code:    code,
 		Message: msg,
 		Data:    nil,

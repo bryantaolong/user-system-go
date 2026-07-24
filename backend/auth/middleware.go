@@ -4,7 +4,6 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/bryan/user-system/model"
 	"github.com/bryan/user-system/pkg/jwt"
 	"github.com/bryan/user-system/cache"
 	"github.com/bryan/user-system/response"
@@ -113,17 +112,9 @@ func RequireRole(role string) gin.HandlerFunc {
 }
 
 func writeUnauthorized(c *gin.Context, msg string) {
-	c.JSON(http.StatusUnauthorized, model.Result{
-		Code:    response.StatusUnauthorized,
-		Message: msg,
-		Data:    nil,
-	})
+	response.ErrorWithHTTPStatus(c, http.StatusUnauthorized, response.StatusUnauthorized, msg)
 }
 
 func writeForbidden(c *gin.Context, msg string) {
-	c.JSON(http.StatusForbidden, model.Result{
-		Code:    response.StatusForbidden,
-		Message: msg,
-		Data:    nil,
-	})
+	response.ErrorWithHTTPStatus(c, http.StatusForbidden, response.StatusForbidden, msg)
 }
