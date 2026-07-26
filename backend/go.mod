@@ -1,6 +1,6 @@
-module github.com/bryan/user-system
+module github.com/bryantaolong/user-system
 
-go 1.22
+go 1.25
 
 require (
 	github.com/gin-gonic/gin v1.10.0

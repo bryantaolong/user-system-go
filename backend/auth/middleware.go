@@ -4,9 +4,9 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/bryan/user-system/pkg/jwt"
-	"github.com/bryan/user-system/cache"
-	"github.com/bryan/user-system/response"
+	"github.com/bryantaolong/user-system/pkg/jwt"
+	"github.com/bryantaolong/user-system/cache"
+	"github.com/bryantaolong/user-system/response"
 	"github.com/gin-gonic/gin"
 )
 

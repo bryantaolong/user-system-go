@@ -1,5 +1,38 @@
+# Binaries
 *.exe
-user-system
-user-system.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binary
 *.test
+
+# Output of the go coverage tool
 *.out
+
+# Go workspace file
+go.work
+
+# Dependency directories
+vendor/
+
+# Go workspace
+go.work
+go.work.sum
+
+# IDE
+.idea/
+*.iml
+*.swp
+*.swo
+*~
+
+# Build output
+/bin/
+/build/
+/out/
+
+# OS
+.DS_Store
+Thumbs.db

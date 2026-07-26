@@ -3,9 +3,9 @@ package user
 import (
 	"strconv"
 
-	"github.com/bryan/user-system/auth"
-	"github.com/bryan/user-system/model"
-	"github.com/bryan/user-system/response"
+	"github.com/bryantaolong/user-system/auth"
+	"github.com/bryantaolong/user-system/model"
+	"github.com/bryantaolong/user-system/response"
 	"github.com/gin-gonic/gin"
 )
 

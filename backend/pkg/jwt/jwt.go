@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/bryan/user-system/config"
+	"github.com/bryantaolong/user-system/config"
 	"github.com/golang-jwt/jwt/v5"
 )
 

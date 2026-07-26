@@ -5,12 +5,12 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/bryan/user-system/config"
-	"github.com/bryan/user-system/model"
-	pkgHttp "github.com/bryan/user-system/pkg/http"
-	"github.com/bryan/user-system/pkg/jwt"
-	"github.com/bryan/user-system/cache"
-	"github.com/bryan/user-system/response"
+	"github.com/bryantaolong/user-system/config"
+	"github.com/bryantaolong/user-system/model"
+	pkgHttp "github.com/bryantaolong/user-system/pkg/http"
+	"github.com/bryantaolong/user-system/pkg/jwt"
+	"github.com/bryantaolong/user-system/cache"
+	"github.com/bryantaolong/user-system/response"
 	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
 )

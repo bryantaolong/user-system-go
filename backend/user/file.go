@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/bryan/user-system/config"
-	"github.com/bryan/user-system/response"
+	"github.com/bryantaolong/user-system/config"
+	"github.com/bryantaolong/user-system/response"
 	"go.uber.org/zap"
 )
 

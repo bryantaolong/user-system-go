@@ -3,7 +3,7 @@ package middleware
 import (
 	"strings"
 
-	"github.com/bryan/user-system/config"
+	"github.com/bryantaolong/user-system/config"
 	"github.com/gin-gonic/gin"
 )
 

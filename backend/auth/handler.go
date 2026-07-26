@@ -4,8 +4,8 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/bryan/user-system/model"
-	"github.com/bryan/user-system/response"
+	"github.com/bryantaolong/user-system/model"
+	"github.com/bryantaolong/user-system/response"
 	"github.com/gin-gonic/gin"
 )
 

@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/bryan/user-system/response"
+	"github.com/bryantaolong/user-system/response"
 	"github.com/gin-gonic/gin"
 )
 
