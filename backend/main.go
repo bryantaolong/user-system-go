@@ -137,7 +137,7 @@ func registerRoutes(
 		users.GET("/:userId", auth.RequireRole("ADMIN"), userHandler.GetUserByID)
 		users.GET("/username/:username", auth.RequireRole("ADMIN"), userHandler.GetUserByUsername)
 		users.POST("/search", auth.RequireRole("ADMIN"), userHandler.QueryUsers)
-		users.PUT("/:userId", userHandler.UpdateUser)
+		users.PUT("/:userId", auth.RequireAuth(), userHandler.UpdateUser)
 		users.PUT("/roles/:userId", auth.RequireRole("ADMIN"), userHandler.ChangeRole)
 		users.PUT("/password/:userId", auth.RequireRole("ADMIN"), userHandler.ResetPassword)
 		users.PUT("/block/:userId", auth.RequireRole("ADMIN"), userHandler.BlockUser)

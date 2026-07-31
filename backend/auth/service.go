@@ -76,14 +76,18 @@ func (s *Service) Register(ctx context.Context, req *model.RegisterRequest) (*mo
 		Version:         0,
 		CreatedAt:       now,
 		UpdatedAt:       now,
-		CreatedBy:       strPtr(req.Username),
-		UpdatedBy:       strPtr(req.Username),
 	}
 
 	// 4. 插入用户数据
 	if err := s.userRepo.Insert(user); err != nil {
 		return nil, response.NewBusinessError("插入数据库失败")
 	}
+
+	// 5. 回填审计字段（注册时无认证用户，操作人设为 "0"）
+	operator := "0"
+	user.CreatedBy = &operator
+	user.UpdatedBy = &operator
+	_ = s.userRepo.Update(user)
 
 	s.logger.Info("用户注册成功", zap.Int64("id", user.ID), zap.String("username", user.Username))
 	return user, nil
@@ -105,11 +109,11 @@ func (s *Service) Login(ctx context.Context, req *model.LoginRequest, userAgent,
 			currentFailCount = *user.LoginFailCount
 		}
 		user.LoginFailCount = intPtr(currentFailCount + 1)
-		operator := user.Username
-		if operator == "" {
-			operator = "SYSTEM"
+		operator := fmt.Sprintf("%d", user.ID)
+		if operator == "0" {
+			operator = "0"
 		}
-		user.UpdatedBy = strPtr(operator)
+		user.UpdatedBy = &operator
 		user.Version++
 
 		// 如果输入密码错误次数达到限额，则锁定账号
@@ -141,13 +145,10 @@ func (s *Service) Login(ctx context.Context, req *model.LoginRequest, userAgent,
 	user.LastLoginIP = &clientIP
 	user.LastLoginDevice = &device
 	user.LoginFailCount = intPtr(0)
-	operator := user.Username
-	if operator == "" {
-		operator = "SYSTEM"
-	}
+	operator := fmt.Sprintf("%d", user.ID)
 	user.Version++
 	user.UpdatedAt = now
-	user.UpdatedBy = strPtr(operator)
+	user.UpdatedBy = &operator
 	_ = s.userRepo.Update(user)
 
 	// 5. 生成新的 JWT Token
@@ -218,6 +219,31 @@ func (s *Service) ValidateToken(token string) bool {
 	return jwt.ValidateToken(token)
 }
 
+// ValidateTokenWithStatus 校验 JWT Token 及账户状态
+func (s *Service) ValidateTokenWithStatus(token string) (string, error) {
+	if !jwt.ValidateToken(token) {
+		return "Invalid token", nil
+	}
+	claims, err := jwt.ParseToken(token)
+	if err != nil {
+		return "Invalid token", nil
+	}
+
+	user, err := s.userRepo.SelectByID(claims.UserID)
+	if err != nil || user == nil {
+		return "Invalid token", nil
+	}
+
+	if !user.IsEnabled() {
+		return "Account disabled", nil
+	}
+	if !user.IsAccountNonLocked() {
+		return "Account locked", nil
+	}
+
+	return "Validation passed", nil
+}
+
 // RefreshToken 刷新 JWT Token
 func (s *Service) RefreshToken(ctx context.Context) (string, error) {
 	username, err := s.GetCurrentUsername(ctx)
@@ -262,14 +288,11 @@ func (s *Service) ChangePassword(ctx context.Context, oldPassword, newPassword s
 	now := time.Now()
 	user.Password = string(hashedPwd)
 	user.PasswordResetAt = &now
-	operator := user.Username
-	if operator == "" {
-		operator = "SYSTEM"
-	}
+	operator := fmt.Sprintf("%d", user.ID)
 
 	user.Version++
 	user.UpdatedAt = now
-	user.UpdatedBy = strPtr(operator)
+	user.UpdatedBy = &operator
 
 	if err := s.userRepo.Update(user); err != nil {
 		return nil, response.NewBusinessError("密码修改失败")

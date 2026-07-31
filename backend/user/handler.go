@@ -115,6 +115,18 @@ func (h *Handler) UpdateUser(c *gin.Context) {
 		return
 	}
 
+	// 权限检查：仅管理员或本人可修改
+	isAdmin := h.authSvc.IsAdmin(c.Request.Context())
+	currentUserID, err := h.authSvc.GetCurrentUserID(c.Request.Context())
+	if err != nil {
+		handleError(c, err)
+		return
+	}
+	if !isAdmin && currentUserID != userID {
+		response.Error(c, response.StatusForbidden, "无权修改其他用户信息")
+		return
+	}
+
 	var req model.UserUpdateRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.Error(c, response.StatusBadRequest, err.Error())
@@ -225,8 +237,9 @@ func (h *Handler) DeleteUser(c *gin.Context) {
 func (h *Handler) ExportAllUsers(c *gin.Context) {
 	pageNum, _ := strconv.Atoi(c.DefaultQuery("pageNum", "1"))
 	_ = pageNum // 导出服务内部处理分页
+	pageSize, _ := strconv.Atoi(c.DefaultQuery("pageSize", "1000"))
 
-	f, err := h.userSvc.ExportAllUsers()
+	f, err := h.userSvc.ExportAllUsers(pageSize)
 	if err != nil {
 		handleError(c, err)
 		return

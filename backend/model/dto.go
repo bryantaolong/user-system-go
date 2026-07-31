@@ -6,15 +6,15 @@ import "time"
 
 // RegisterRequest 注册请求
 type RegisterRequest struct {
-	Username string `json:"username" binding:"required,min=2,max=50"`
+	Username string `json:"username" binding:"required,min=2,max=20"`
 	Password string `json:"password" binding:"required,min=6,max=100"`
-	Phone    string `json:"phone" binding:"omitempty"`
+	Phone    string `json:"phone" binding:"omitempty,regexp=^1[3-9]\\d{9}$"`
 	Email    string `json:"email" binding:"omitempty,email"`
 }
 
 // LoginRequest 登录请求
 type LoginRequest struct {
-	Username string `json:"username" binding:"required"`
+	Username string `json:"username" binding:"required,min=2,max=20"`
 	Password string `json:"password" binding:"required"`
 }
 
@@ -26,21 +26,21 @@ type ChangePasswordRequest struct {
 
 // UserCreateRequest 管理员创建用户请求
 type UserCreateRequest struct {
-	Username string  `json:"username" binding:"required,min=2,max=50"`
+	Username string  `json:"username" binding:"required,min=2,max=20"`
 	Password string  `json:"password" binding:"required,min=6,max=100"`
-	Phone    *string `json:"phone" binding:"omitempty"`
+	Phone    *string `json:"phone" binding:"omitempty,regexp=^1[3-9]\\d{9}$"`
 	Email    *string `json:"email" binding:"omitempty,email"`
 	RoleIDs  []int   `json:"roleIds" binding:"omitempty"`
 }
 
 // UserUpdateRequest 更新用户请求
 type UserUpdateRequest struct {
-	Phone    *string `json:"phone" binding:"omitempty"`
+	Phone    *string `json:"phone" binding:"omitempty,regexp=^1[3-9]\\d{9}$"`
 	Email    *string `json:"email" binding:"omitempty,email"`
-	RealName *string `json:"realName" binding:"omitempty"`
+	RealName *string `json:"realName" binding:"omitempty,min=2,max=20"`
 	Gender   *int    `json:"gender" binding:"omitempty"`
 	Birthday *string `json:"birthday" binding:"omitempty"` // ISO8601 date
-	Avatar   *string `json:"avatar" binding:"omitempty"`
+	Avatar   *string `json:"avatar" binding:"omitempty,max=500,regexp=^(https?://.*)?$"`
 }
 
 // ChangeRoleRequest 修改角色请求
@@ -50,10 +50,10 @@ type ChangeRoleRequest struct {
 
 // UserQueryRequest 用户查询请求
 type UserQueryRequest struct {
-	Username *string `json:"username" form:"username"`
-	Phone    *string `json:"phone" form:"phone"`
-	Email    *string `json:"email" form:"email"`
-	Status   *int    `json:"status" form:"status"`
+	Username *string `json:"username" form:"username" binding:"omitempty,regexp=^[a-zA-Z0-9_\\u4e00-\\u9fa5]+$"`
+	Phone    *string `json:"phone" form:"phone" binding:"omitempty,regexp=^1[3-9]\\d{9}$"`
+	Email    *string `json:"email" form:"email" binding:"omitempty,email,max=100"`
+	Status   *int    `json:"status" form:"status" binding:"required"`
 }
 
 // UserExportRequest 用户导出请求

@@ -98,5 +98,13 @@ func isValidImageType(header []byte) bool {
 	if len(header) >= 2 && header[0] == 0xFF && header[1] == 0xD8 {
 		return true
 	}
+	// GIF: 47 49 46 38 (GIF8)
+	if len(header) >= 4 && header[0] == 0x47 && header[1] == 0x49 && header[2] == 0x46 && header[3] == 0x38 {
+		return true
+	}
+	// WebP: 52 49 46 46 ... 57 45 42 50 (RIFF...WEBP)
+	if len(header) >= 12 && header[0] == 0x52 && header[1] == 0x49 && header[2] == 0x46 && header[3] == 0x46 && header[8] == 0x57 && header[9] == 0x45 && header[10] == 0x42 && header[11] == 0x50 {
+		return true
+	}
 	return false
 }

@@ -86,11 +86,13 @@ func (h *Handler) ValidateToken(c *gin.Context) {
 		response.Error(c, response.StatusBadRequest, "token 参数不能为空")
 		return
 	}
-	if !h.authSvc.ValidateToken(token) {
-		response.Success(c, "Invalid token")
+
+	result, err := h.authSvc.ValidateTokenWithStatus(token)
+	if err != nil {
+		handleError(c, err)
 		return
 	}
-	response.Success(c, "Validation passed")
+	response.Success(c, result)
 }
 
 // ChangePassword 修改用户密码

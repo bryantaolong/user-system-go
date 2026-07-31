@@ -312,7 +312,11 @@ func (s *Service) UnblockUser(ctx context.Context, userID int64) (*model.SysUser
 
 // DeleteUser 删除用户（逻辑删除）
 func (s *Service) DeleteUser(ctx context.Context, userID int64) (int64, error) {
-	operator := getCurrentOperator(ctx)
+	claims, _ := ctx.Value("claims").(*jwt.Claims)
+	operator := "0"
+	if claims != nil && claims.Username != "" {
+		operator = claims.Username
+	}
 	if err := s.userRepo.DeleteByID(userID, operator); err != nil {
 		return 0, response.NewResourceNotFoundError("用户不存在或已被删除")
 	}
@@ -321,7 +325,11 @@ func (s *Service) DeleteUser(ctx context.Context, userID int64) (int64, error) {
 }
 
 // ExportAllUsers 全量导出用户数据为 Excel
-func (s *Service) ExportAllUsers() (*excelize.File, error) {
+func (s *Service) ExportAllUsers(pageSize int) (*excelize.File, error) {
+	if pageSize <= 0 {
+		pageSize = 1000
+	}
+
 	f := excelize.NewFile()
 	sheet := "用户列表"
 	f.SetSheetName("Sheet1", sheet)
@@ -335,7 +343,6 @@ func (s *Service) ExportAllUsers() (*excelize.File, error) {
 
 	// 分批查询写入
 	pageNum := 1
-	pageSize := 1000
 	row := 2
 
 	for {
@@ -459,7 +466,13 @@ func (s *ProfileService) UpdateUserProfile(ctx context.Context, userID int64, re
 		profile.Gender = &g
 	}
 	if req.Birthday != nil {
-		t, _ := time.Parse(time.RFC3339, *req.Birthday)
+		t, err := time.Parse(time.RFC3339, *req.Birthday)
+		if err != nil {
+			return nil, response.NewBusinessError("出生日期格式不正确")
+		}
+		if t.After(time.Now()) {
+			return nil, response.NewBusinessError("出生日期必须是过去的日期")
+		}
 		profile.Birthday = &t
 	}
 	if req.Avatar != nil {
@@ -508,13 +521,13 @@ func (s *ProfileService) UpdateAvatar(ctx context.Context, userID int64, file *m
 	return avatarPath, nil
 }
 
-// getCurrentOperator 获取当前操作者标识
+// getCurrentOperator 获取当前操作者标识（用户ID）
 func getCurrentOperator(ctx context.Context) string {
 	claims, ok := ctx.Value("claims").(*jwt.Claims)
 	if !ok || claims == nil {
-		return "SYSTEM"
+		return "0"
 	}
-	return fmt.Sprintf("%s", claims.Username)
+	return fmt.Sprintf("%d", claims.UserID)
 }
 
 func derefStr(s *string) string {
