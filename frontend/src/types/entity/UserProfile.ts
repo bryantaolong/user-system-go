@@ -8,6 +8,6 @@ export interface UserProfile {
   version: number;
   createdAt: string;
   updatedAt: string;
-  createdBy: string;
-  updatedBy: string;
+  createdBy?: string;
+  updatedBy?: string;
 }

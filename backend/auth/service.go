@@ -187,6 +187,18 @@ func (s *Service) GetCurrentUsername(ctx context.Context) (string, error) {
 	return claims.Username, nil
 }
 
+// GetUserByUsername 根据用户名获取用户信息
+func (s *Service) GetUserByUsername(ctx context.Context, username string) (*model.SysUser, error) {
+	user, err := s.userRepo.SelectByUsername(username)
+	if err != nil {
+		return nil, response.NewResourceNotFoundError("用户不存在")
+	}
+	if user == nil {
+		return nil, response.NewResourceNotFoundError("用户不存在")
+	}
+	return user, nil
+}
+
 // GetCurrentUser 获取当前登录用户的完整信息
 func (s *Service) GetCurrentUser(ctx context.Context) (*model.SysUser, error) {
 	userID, err := s.GetCurrentUserID(ctx)
@@ -195,6 +207,9 @@ func (s *Service) GetCurrentUser(ctx context.Context) (*model.SysUser, error) {
 	}
 	user, err := s.userRepo.SelectByID(userID)
 	if err != nil {
+		return nil, response.NewResourceNotFoundError("用户不存在")
+	}
+	if user == nil {
 		return nil, response.NewResourceNotFoundError("用户不存在")
 	}
 	return user, nil
@@ -256,7 +271,10 @@ func (s *Service) RefreshToken(ctx context.Context) (string, error) {
 		return "", response.NewUnauthorizedError("Token 无效或已过期")
 	}
 
-	claims, _ := jwt.ParseToken(existingToken)
+	claims, err := jwt.ParseToken(existingToken)
+	if err != nil || claims == nil {
+		return "", response.NewBusinessError("Token 解析失败")
+	}
 	newToken, err := jwt.GenerateToken(claims.UserID, claims.Username, claims.Roles)
 	if err != nil {
 		return "", response.NewBusinessError("Token 生成失败")

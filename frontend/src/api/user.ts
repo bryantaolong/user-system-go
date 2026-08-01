@@ -1,7 +1,7 @@
 import request from './request'
-import type { ApiResponse, PageResponse } from '@/models/response'
-import type { SysUser } from '@/models/entity'
-import type { UserCreateRequest, UserUpdateRequest, ChangePasswordRequest, UserSearchRequest } from '@/models/request/user'
+import type { ApiResponse, PageResponse } from '@/types/response'
+import type { SysUser } from '@/types/entity'
+import type { UserCreateRequest, UserUpdateRequest, ChangePasswordRequest, UserSearchRequest } from '@/types/request/user'
 
 export function createUser(data: UserCreateRequest): Promise<ApiResponse<SysUser>> {
   return request.post('/api/users', data)

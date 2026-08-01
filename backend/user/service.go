@@ -154,6 +154,9 @@ func (s *Service) GetUserByUsername(ctx context.Context, username string) (*mode
 	if err != nil {
 		return nil, err
 	}
+	if user == nil {
+		return nil, response.NewResourceNotFoundError("用户不存在")
+	}
 	return user, nil
 }
 

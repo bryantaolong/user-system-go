@@ -3,7 +3,7 @@ import { ref, computed } from 'vue'
 import * as authApi from '@/api/auth'
 import * as userProfileApi from '@/api/userProfile'
 import * as userApi from '@/api/user'
-import type { UserVO, UserProfileVO } from '@/models/vo'
+import type { UserVO, UserProfileVO } from '@/types/vo'
 
 export const useUserStore = defineStore(
   'user',

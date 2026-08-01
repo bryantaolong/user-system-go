@@ -1,7 +1,7 @@
 import request from './request'
-import type { ApiResponse } from '@/models/response'
-import type { UserVO } from '@/models/vo'
-import type { LoginRequest, RegisterRequest, ChangePasswordRequest } from '@/models/request/auth'
+import type { ApiResponse } from '@/types/response'
+import type { UserVO } from '@/types/vo'
+import type { LoginRequest, RegisterRequest, ChangePasswordRequest } from '@/types/request/auth'
 
 export function register(data: RegisterRequest): Promise<ApiResponse<UserVO>> {
   return request.post('/api/auth/register', data)
