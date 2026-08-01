@@ -4,8 +4,8 @@ export interface SysUser {
   password?: string;
   phone?: string;
   email?: string;
-  status: 'NORMAL' | 'LOCKED' | 'BANNED';
-  roles: string;
+  status: 'NORMAL' | 'LOCKED' | 'BANNED' | 'UNKNOWN';
+  roles?: string;
   lastLoginAt?: string;
   lastLoginIp?: string;
   lastLoginDevice?: string;
@@ -16,6 +16,6 @@ export interface SysUser {
   version: number;
   createdAt: string;
   updatedAt: string;
-  createdBy: string;
-  updatedBy: string;
+  createdBy?: string;
+  updatedBy?: string;
 }

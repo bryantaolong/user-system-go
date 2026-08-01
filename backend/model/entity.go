@@ -24,6 +24,26 @@ func (s UserStatus) String() string {
 	}
 }
 
+func (s UserStatus) MarshalJSON() ([]byte, error) {
+	return []byte(`"` + s.String() + `"`), nil
+}
+
+func (s *UserStatus) UnmarshalJSON(data []byte) error {
+	str := string(data)
+	str = str[1 : len(str)-1] // 去掉引号
+	switch str {
+	case "NORMAL":
+		*s = UserStatusNormal
+	case "BANNED":
+		*s = UserStatusBanned
+	case "LOCKED":
+		*s = UserStatusLocked
+	default:
+		*s = UserStatusNormal
+	}
+	return nil
+}
+
 func UserStatusFromCode(code int) UserStatus {
 	return UserStatus(code)
 }

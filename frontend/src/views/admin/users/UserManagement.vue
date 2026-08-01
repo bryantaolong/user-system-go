@@ -26,9 +26,9 @@
         </a-form-item>
         <a-form-item label="状态" field="status">
           <a-select v-model="searchForm.status" placeholder="请选择状态" allow-clear style="width: 120px">
-            <a-option label="正常" value="NORMAL" />
-            <a-option label="锁定" value="LOCKED" />
-            <a-option label="封禁" value="BANNED" />
+            <a-option :label="'正常'" :value="0" />
+            <a-option :label="'锁定'" :value="1" />
+            <a-option :label="'封禁'" :value="2" />
           </a-select>
         </a-form-item>
         <a-form-item>
@@ -204,7 +204,7 @@ const searchForm = reactive({
   username: '',
   phone: '',
   email: '',
-  status: '' as string,
+  status: undefined as number | undefined,
 })
 
 const userForm = reactive({
@@ -289,7 +289,7 @@ function handleReset() {
   searchForm.username = ''
   searchForm.phone = ''
   searchForm.email = ''
-  searchForm.status = ''
+  searchForm.status = undefined
   pageNum.value = 1
   loadUsers()
 }
