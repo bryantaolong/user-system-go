@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/bryantaolong/user-system/auth"
-	"github.com/bryantaolong/user-system/model"
+	"github.com/bryantaolong/user-system/types"
 	"github.com/bryantaolong/user-system/pkg/jwt"
 	"github.com/bryantaolong/user-system/response"
 	"github.com/xuri/excelize/v2"
