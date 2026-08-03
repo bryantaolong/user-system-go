@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/bryantaolong/user-system/config"
-	"github.com/bryantaolong/user-system/model"
+	"github.com/bryantaolong/user-system/types"
 	pkgHttp "github.com/bryantaolong/user-system/pkg/http"
 	"github.com/bryantaolong/user-system/pkg/jwt"
 	"github.com/bryantaolong/user-system/cache"

@@ -1,7 +1,7 @@
 import request from './request'
-import type { ApiResponse } from '@/types/response'
-import type { UserUpdateRequest } from '@/types/request/user'
-import type { UserProfileVO } from '@/types/vo'
+import type { ApiResponse } from '@/models/response'
+import type { UserUpdateRequest } from '@/models/request/user'
+import type { UserProfileVO } from '@/models/vo'
 
 export function uploadAvatar(file: File): Promise<ApiResponse<string>> {
   const allowedTypes = ['image/png', 'image/jpeg', 'image/gif', 'image/webp']

@@ -1,7 +1,7 @@
 package auth
 
 import (
-	"github.com/bryantaolong/user-system/model"
+	"github.com/bryantaolong/user-system/types"
 	"gorm.io/gorm"
 )
 

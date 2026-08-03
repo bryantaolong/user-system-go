@@ -4,7 +4,7 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/bryantaolong/user-system/model"
+	"github.com/bryantaolong/user-system/types"
 	"github.com/bryantaolong/user-system/response"
 	"github.com/gin-gonic/gin"
 )
