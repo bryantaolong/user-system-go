@@ -87,7 +87,9 @@ func (s *Service) Register(ctx context.Context, req *model.RegisterRequest) (*mo
 	operator := "0"
 	user.CreatedBy = &operator
 	user.UpdatedBy = &operator
-	_ = s.userRepo.Update(user)
+	if err := s.userRepo.Update(user); err != nil {
+		s.logger.Warn("回填审计字段失败", zap.Int64("userId", user.ID), zap.Error(err))
+	}
 
 	s.logger.Info("用户注册成功", zap.Int64("id", user.ID), zap.String("username", user.Username))
 	return user, nil
@@ -336,6 +338,11 @@ func (s *Service) Logout(ctx context.Context) error {
 		return response.NewBusinessError("Token 清除失败")
 	}
 	return nil
+}
+
+// ForceClearToken 强制清除指定用户的 Token
+func (s *Service) ForceClearToken(ctx context.Context, username string) bool {
+	return s.redis.Delete(ctx, username)
 }
 
 // DeleteAccount 注销用户

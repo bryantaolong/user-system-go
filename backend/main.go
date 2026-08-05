@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/bryantaolong/user-system/auth"
 	"github.com/bryantaolong/user-system/config"
@@ -19,7 +20,11 @@ import (
 
 func main() {
 	// 1. 加载配置
-	cfg := config.Load()
+	cfg, err := config.Load()
+	if err != nil {
+		fmt.Println("加载配置失败:", err)
+		os.Exit(1)
+	}
 
 	// 2. 初始化日志
 	logger := config.InitLogger(&cfg.Logging)
@@ -105,7 +110,11 @@ func initDB(cfg *config.DatabaseConfig, logger *zap.Logger) (*gorm.DB, error) {
 	}
 
 	sqlDB.SetMaxOpenConns(cfg.MaxOpenConns)
-	sqlDB.SetConnMaxLifetime(0)
+	if cfg.ConnMaxLifetime > 0 {
+		sqlDB.SetConnMaxLifetime(time.Duration(cfg.ConnMaxLifetime) * time.Minute)
+	} else {
+		sqlDB.SetConnMaxLifetime(5 * time.Minute)
+	}
 
 	logger.Info("数据库连接成功", zap.String("driver", cfg.Driver))
 	return db, nil
@@ -149,8 +158,8 @@ func registerRoutes(
 	profiles := r.Group("/api/user-profiles")
 	{
 		profiles.POST("/avatar", auth.RequireAuth(), userHandler.UploadAvatar)
-		profiles.GET("/:userId", userHandler.GetUserProfileByUserId)
-		profiles.GET("/name/:realName", auth.RequireAuth(), userHandler.GetUserProfileByRealName)
+		profiles.GET("/:userId", auth.RequireAuth(), userHandler.GetUserProfileByUserId)
+		profiles.GET("/name/:realName", auth.RequireRole("ADMIN"), userHandler.GetUserProfileByRealName)
 		profiles.GET("/me", auth.RequireAuth(), userHandler.GetCurrentUserProfile)
 		profiles.PUT("", auth.RequireAuth(), userHandler.UpdateUserProfile)
 	}

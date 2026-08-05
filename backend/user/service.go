@@ -328,7 +328,7 @@ func (s *Service) DeleteUser(ctx context.Context, userID int64) (int64, error) {
 }
 
 // ExportAllUsers 全量导出用户数据为 Excel
-func (s *Service) ExportAllUsers(pageSize int) (*excelize.File, error) {
+func (s *Service) ExportAllUsers(ctx context.Context, pageSize int) (*excelize.File, error) {
 	if pageSize <= 0 {
 		pageSize = 1000
 	}
@@ -349,9 +349,15 @@ func (s *Service) ExportAllUsers(pageSize int) (*excelize.File, error) {
 	row := 2
 
 	for {
+		if ctx.Err() != nil {
+			return nil, ctx.Err()
+		}
 		offset := (pageNum - 1) * pageSize
 		users, err := s.userRepo.SelectPageByConditions(offset, pageSize, nil)
-		if err != nil || len(users) == 0 {
+		if err != nil {
+			return nil, err
+		}
+		if len(users) == 0 {
 			break
 		}
 
@@ -508,7 +514,9 @@ func (s *ProfileService) UpdateAvatar(ctx context.Context, userID int64, file *m
 
 	// 删除旧头像
 	if profile.Avatar != nil && *profile.Avatar != "" {
-		s.fileSvc.DeleteFile(*profile.Avatar)
+		if !s.fileSvc.DeleteFile(*profile.Avatar) {
+			s.logger.Warn("删除旧头像失败", zap.String("avatar", *profile.Avatar), zap.Int64("userId", userID))
+		}
 	}
 
 	profile.Avatar = &avatarPath

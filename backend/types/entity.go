@@ -1,6 +1,10 @@
 package model
 
-import "time"
+import (
+	"time"
+
+	"github.com/bryantaolong/user-system/config"
+)
 
 // UserStatus 用户状态枚举
 type UserStatus int
@@ -104,7 +108,11 @@ func (u *SysUser) IsAccountNonLocked() bool {
 		return true
 	}
 	if u.Status == UserStatusLocked && u.LockedAt != nil {
-		return time.Now().After(u.LockedAt.Add(time.Hour))
+		duration := time.Hour
+		if config.AppConfig != nil && config.AppConfig.Security.AccountLockDurationMinutes > 0 {
+			duration = time.Duration(config.AppConfig.Security.AccountLockDurationMinutes) * time.Minute
+		}
+		return time.Now().After(u.LockedAt.Add(duration))
 	}
 	return false
 }

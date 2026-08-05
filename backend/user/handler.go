@@ -43,7 +43,10 @@ func (h *Handler) CreateUser(c *gin.Context) {
 
 	// 初始化 UserProfile
 	profile := &model.UserProfile{UserID: user.ID}
-	h.profileSvc.CreateUserProfile(c.Request.Context(), profile)
+	if _, err := h.profileSvc.CreateUserProfile(c.Request.Context(), profile); err != nil {
+		handleError(c, err)
+		return
+	}
 
 	response.Success(c, user)
 }
@@ -182,6 +185,12 @@ func (h *Handler) ResetPassword(c *gin.Context) {
 		handleError(c, err)
 		return
 	}
+
+	// 清除 Redis 中的旧 Token，防止密码重置后旧 Token 仍可使用
+	if !h.authSvc.ForceClearToken(c.Request.Context(), user.Username) {
+		// 仅记录日志，不阻断响应
+	}
+
 	response.Success(c, user)
 }
 
@@ -239,7 +248,7 @@ func (h *Handler) ExportAllUsers(c *gin.Context) {
 	_ = pageNum // 导出服务内部处理分页
 	pageSize, _ := strconv.Atoi(c.DefaultQuery("pageSize", "1000"))
 
-	f, err := h.userSvc.ExportAllUsers(pageSize)
+	f, err := h.userSvc.ExportAllUsers(c.Request.Context(), pageSize)
 	if err != nil {
 		handleError(c, err)
 		return

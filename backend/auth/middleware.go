@@ -25,8 +25,7 @@ func AuthMiddleware(userRepo *UserRepository, redisSvc *redis.RedisClient) gin.H
 		// 解析 Token
 		claims, err := jwt.ParseToken(tokenStr)
 		if err != nil {
-			writeUnauthorized(c, "Token无效或已过期")
-			c.Abort()
+			c.Next()
 			return
 		}
 
@@ -40,7 +39,12 @@ func AuthMiddleware(userRepo *UserRepository, redisSvc *redis.RedisClient) gin.H
 
 		// 从数据库加载用户，验证用户状态
 		user, err := userRepo.SelectByID(claims.UserID)
-		if err != nil || user == nil || !user.IsEnabled() || !user.IsAccountNonLocked() {
+		if err != nil {
+			response.ErrorWithHTTPStatus(c, http.StatusInternalServerError, response.StatusInternalError, "服务繁忙，请稍后重试")
+			c.Abort()
+			return
+		}
+		if user == nil || !user.IsEnabled() || !user.IsAccountNonLocked() {
 			writeUnauthorized(c, "用户状态异常或不存在")
 			c.Abort()
 			return

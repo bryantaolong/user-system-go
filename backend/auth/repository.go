@@ -73,13 +73,20 @@ func (r *UserRepository) Update(user *model.SysUser) error {
 // DeleteByID 逻辑删除用户
 func (r *UserRepository) DeleteByID(id int64, updatedBy string) error {
 	now := gorm.Expr("NOW()")
-	return r.db.Model(&model.SysUser{}).
+	result := r.db.Model(&model.SysUser{}).
 		Where("id = ? AND deleted = 0", id).
 		Updates(map[string]interface{}{
 			"deleted":    1,
 			"updated_at": now,
 			"updated_by": updatedBy,
-		}).Error
+		})
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return gorm.ErrRecordNotFound
+	}
+	return nil
 }
 
 // GetDB 返回底层 DB 实例（供其他模块使用）

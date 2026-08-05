@@ -53,7 +53,7 @@ type UserQueryRequest struct {
 	Username *string `json:"username" form:"username" binding:"omitempty,regexp=^[a-zA-Z0-9_\\u4e00-\\u9fa5]+$"`
 	Phone    *string `json:"phone" form:"phone" binding:"omitempty,regexp=^1[3-9]\\d{9}$"`
 	Email    *string `json:"email" form:"email" binding:"omitempty,email,max=100"`
-	Status   *int    `json:"status" form:"status" binding:"required"`
+	Status   *int    `json:"status" form:"status" binding:"omitempty"`
 }
 
 // UserExportRequest 用户导出请求

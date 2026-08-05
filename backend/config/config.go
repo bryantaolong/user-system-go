@@ -87,7 +87,7 @@ type LoggingConfig struct {
 
 var AppConfig *Config
 
-func Load() *Config {
+func Load() (*Config, error) {
 	viper.SetConfigName("config")
 	viper.SetConfigType("yaml")
 	viper.AddConfigPath(".")
@@ -95,16 +95,16 @@ func Load() *Config {
 	viper.AddConfigPath("../../")
 
 	if err := viper.ReadInConfig(); err != nil {
-		panic(fmt.Sprintf("读取配置文件失败: %v", err))
+		return nil, fmt.Errorf("读取配置文件失败: %w", err)
 	}
 
 	var cfg Config
 	if err := viper.Unmarshal(&cfg); err != nil {
-		panic(fmt.Sprintf("解析配置文件失败: %v", err))
+		return nil, fmt.Errorf("解析配置文件失败: %w", err)
 	}
 
 	AppConfig = &cfg
-	return &cfg
+	return &cfg, nil
 }
 
 func InitLogger(cfg *LoggingConfig) *zap.Logger {

@@ -62,7 +62,8 @@ func (s *FileService) StoreFile(file *multipart.FileHeader, subDir string) (stri
 	if ext == "" {
 		ext = ".png"
 	}
-	fileName := fmt.Sprintf("%d_%s", time.Now().UnixMilli(), strings.ReplaceAll(file.Filename, ext, "")+ext)
+	baseName := sanitizeFileName(strings.TrimSuffix(file.Filename, ext))
+	fileName := fmt.Sprintf("%d_%s%s", time.Now().UnixMilli(), baseName, ext)
 	dst := filepath.Join(absPath, fileName)
 
 	dstFile, err := os.Create(dst)
@@ -80,7 +81,14 @@ func (s *FileService) StoreFile(file *multipart.FileHeader, subDir string) (stri
 
 // DeleteFile 删除本地文件
 func (s *FileService) DeleteFile(filePath string) bool {
-	fullPath := filepath.Join(s.uploadDir, filePath)
+	absUploadDir, _ := filepath.Abs(s.uploadDir)
+	fullPath, _ := filepath.Abs(filepath.Join(s.uploadDir, filePath))
+
+	if !strings.HasPrefix(fullPath, absUploadDir+string(filepath.Separator)) && fullPath != absUploadDir {
+		s.logger.Error("删除文件路径异常，拒绝操作", zap.String("path", filePath))
+		return false
+	}
+
 	err := os.Remove(fullPath)
 	if err != nil {
 		s.logger.Error("删除文件失败", zap.String("path", filePath), zap.Error(err))
@@ -107,4 +115,17 @@ func isValidImageType(header []byte) bool {
 		return true
 	}
 	return false
+}
+
+// sanitizeFileName 清理文件名中的路径遍历字符，保留安全字符
+func sanitizeFileName(name string) string {
+	name = filepath.Base(name)
+	name = strings.ReplaceAll(name, "\\", "_")
+	name = strings.ReplaceAll(name, "/", "_")
+	name = strings.ReplaceAll(name, "..", "_")
+	name = strings.ReplaceAll(name, "\x00", "")
+	if name == "" || name == "." {
+		return "file"
+	}
+	return name
 }
